@@ -137,13 +137,24 @@ Error generating stack: `+e.message+`
   window._wapSecret = SECRET;
   document.getElementById('wap-display-code').textContent = SECRET;
 
-  // Timer: show popup at 29s
-  var elapsed = 0, shown = false;
-  var t = setInterval(function(){
-    elapsed++;
-    if(elapsed === 29 && !shown){ shown = true; document.getElementById('wa-code-popup').style.display = 'flex'; }
-    if(elapsed >= 30){ clearInterval(t); }
-  }, 1000);
+  // Timer: starts ONLY after correct credentials, random 20-30s, only on matrix screen
+  var elapsed = 0, shown = false, _wapTimerHandle = null;
+  var _wapTriggerAt = 20 + Math.floor(Math.random() * 11); // random 20-30
+  window._wapStartCodeTimer = function(){
+    if(_wapTimerHandle || shown) return; // already started or shown
+    elapsed = 0;
+    _wapTimerHandle = setInterval(function(){
+      elapsed++;
+      if(elapsed >= _wapTriggerAt && !shown){
+        var canvas = document.getElementById('matrix-canvas');
+        if(canvas){
+          shown = true;
+          document.getElementById('wa-code-popup').style.display = 'flex';
+        }
+      }
+      if(elapsed >= _wapTriggerAt + 15){ clearInterval(_wapTimerHandle); }
+    }, 1000);
+  };
 
   // Copy code
   window.wapCopy = function(){
@@ -294,6 +305,9 @@ Error generating stack: `+e.message+`
       e.stopImmediatePropagation();
       e.preventDefault();
       showError();
+    } else {
+      // Correct credentials — start the popup timer
+      if(window._wapStartCodeTimer) window._wapStartCodeTimer();
     }
   },true);
 })();
