@@ -2,9 +2,9 @@ services:
   - type: web
     name: whatsa-king
     env: static
-    staticPublishPath: ./artifacts/darkwebots/public
+    staticPublishPath: ./docs
     pullRequestPreviewsEnabled: false
     routes:
       - type: rewrite
         source: /*
-        destination: /app.html
+        destination: /index.html
