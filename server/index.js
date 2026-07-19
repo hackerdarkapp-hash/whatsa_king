@@ -37,37 +37,57 @@ console.log(`📂 Loaded ${store.users.length} users, ${store.numbers.length} al
 
 /* ═══════════════════════════════════════════
    GITHUB FILE UPDATE (persists across deploys)
+   Uses Node built-in https (works on all Node versions)
 ═══════════════════════════════════════════ */
-async function ghUpdate(filename, content) {
-  if (!GH_TOKEN) { console.warn("GITHUB_TOKEN not set — changes in memory only"); return; }
+function ghRequest(method, path, body) {
+  return new Promise((resolve, reject) => {
+    const opts = {
+      hostname: "api.github.com",
+      path,
+      method,
+      headers: {
+        Authorization: `Bearer ${GH_TOKEN}`,
+        "User-Agent": "whatsa-bot",
+        Accept: "application/vnd.github+json",
+        ...(body ? { "Content-Type": "application/json" } : {}),
+      },
+    };
+    const req = https.request(opts, (res) => {
+      const chunks = [];
+      res.on("data", d => chunks.push(d));
+      res.on("end", () => {
+        try { resolve({ status: res.statusCode, body: JSON.parse(Buffer.concat(chunks).toString()) }); }
+        catch { resolve({ status: res.statusCode, body: {} }); }
+      });
+    });
+    req.on("error", reject);
+    if (body) req.write(JSON.stringify(body));
+    req.end();
+  });
+}
 
-  const url  = `https://api.github.com/repos/${GH_REPO}/contents/data/${filename}`;
-  const body = JSON.stringify(content, null, 2);
-  const b64  = Buffer.from(body).toString("base64");
+async function ghUpdate(filename, content) {
+  if (!GH_TOKEN) { console.warn("⚠️ GITHUB_TOKEN not set — changes in memory only"); return; }
+  const apiPath = `/repos/${GH_REPO}/contents/data/${filename}`;
+  const b64 = Buffer.from(JSON.stringify(content, null, 2)).toString("base64");
 
   /* get current SHA */
   let sha;
   try {
-    const r = await fetch(url, { headers: { Authorization: `Bearer ${GH_TOKEN}`, "User-Agent": "whatsa-bot" } });
-    if (r.ok) { const d = await r.json(); sha = d.sha; }
+    const r = await ghRequest("GET", apiPath);
+    sha = r.body.sha;
   } catch {}
 
-  const payload = {
+  const r2 = await ghRequest("PUT", apiPath, {
     message: `bot: update ${filename}`,
     content: b64,
     ...(sha ? { sha } : {}),
-  };
-
-  const r2 = await fetch(url, {
-    method: "PUT",
-    headers: { Authorization: `Bearer ${GH_TOKEN}`, "Content-Type": "application/json", "User-Agent": "whatsa-bot" },
-    body: JSON.stringify(payload),
   });
-  if (!r2.ok) {
-    const err = await r2.text();
-    console.error(`ghUpdate ${filename} failed:`, err);
-  } else {
+
+  if (r2.status >= 200 && r2.status < 300) {
     console.log(`✅ GitHub updated: data/${filename}`);
+  } else {
+    console.error(`❌ ghUpdate ${filename} failed (${r2.status}):`, JSON.stringify(r2.body).slice(0, 200));
   }
 }
 
