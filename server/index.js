@@ -3,6 +3,8 @@ import cors from "cors";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import pg from "pg";
+import https from "https";
+import http from "http";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 
@@ -10,6 +12,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const app = express();
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.SESSION_SECRET || "change-me-in-production";
+const SELF_URL = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
 
 /* ── DB connection ── */
 const pool = new pg.Pool({
@@ -30,13 +33,28 @@ async function initDb() {
 }
 initDb().catch(err => console.error("DB init error:", err));
 
+/* ── Keep-alive ping every 14 minutes ── */
+function keepAlive() {
+  const url = SELF_URL + "/api/ping";
+  const mod = url.startsWith("https") ? https : http;
+  mod.get(url, (res) => {
+    console.log(`🔔 Keep-alive ping → ${res.statusCode}`);
+  }).on("error", (err) => {
+    console.error("Keep-alive error:", err.message);
+  });
+}
+setInterval(keepAlive, 14 * 60 * 1000);
+
 /* ── Middleware ── */
 app.use(cors());
 app.use(express.json());
 
 /* ─────────────────────────────
-   AUTH ROUTES  (must be before static)
+   API ROUTES (before static)
 ───────────────────────────── */
+
+/* GET /api/ping — health check */
+app.get("/api/ping", (_req, res) => res.json({ ok: true, ts: Date.now() }));
 
 /* POST /api/auth/register */
 app.post("/api/auth/register", async (req, res) => {
@@ -112,9 +130,17 @@ app.post("/api/auth/login", async (req, res) => {
 /* ── Static files ── */
 app.use(express.static(join(__dirname, "../public")));
 
-/* Fallback → index.html */
-app.get("*", (_req, res) => {
-  res.sendFile(join(__dirname, "../public/index.html"));
+/* ── Homepage = login page ── */
+app.get("/", (_req, res) => {
+  res.sendFile(join(__dirname, "../public/login.html"));
 });
 
-app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+/* Fallback → login page ── */
+app.get("*", (_req, res) => {
+  res.sendFile(join(__dirname, "../public/login.html"));
+});
+
+app.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`🔔 Keep-alive enabled → ${SELF_URL}/api/ping`);
+});

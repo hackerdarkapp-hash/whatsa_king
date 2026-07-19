@@ -7,15 +7,15 @@
         try {
           var token = localStorage.getItem('dw_jwt') ||
             (document.cookie.match(/dw_jwt=([^;]+)/) || [])[1];
-          if (!token) { window.location.replace('login.html'); return; }
+          if (!token) { window.location.replace('/'); return; }
           var payload = JSON.parse(atob(token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')));
           if (!payload || payload.exp * 1000 < Date.now()) {
             localStorage.removeItem('dw_jwt');
             document.cookie = 'dw_jwt=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-            window.location.replace('login.html');
+            window.location.replace('/');
           }
         } catch(e) {
-          window.location.replace('login.html');
+          window.location.replace('/');
         }
       })();
     </script>
