@@ -4,18 +4,26 @@
     <!-- ── SESSION GUARD ── -->
     <script>
       (function(){
+        function redirectToLogin(){
+          // if inside iframe → redirect top frame, not just the iframe
+          try{ window.top.location.replace('/'); }catch(e){ window.location.replace('/'); }
+        }
         try {
           var raw = localStorage.getItem('dw_jwt') ||
-            (document.cookie.match(/dw_session=([^;]+)/)||[])[1];
-          if (!raw) { window.location.replace('/'); return; }
-          var p = JSON.parse(atob(raw));
-          if (!p || p.expires < Date.now()) {
+            ((document.cookie.match(/dw_jwt=([^;]+)/)||[])[1])||null;
+          if (!raw) { redirectToLogin(); return; }
+          // JWT has 3 parts: header.payload.signature — decode only the payload
+          var parts = raw.split('.');
+          if (parts.length !== 3) { redirectToLogin(); return; }
+          var p = JSON.parse(atob(parts[1].replace(/-/g,'+').replace(/_/g,'/')));
+          // JWT uses p.exp in seconds
+          if (!p || p.exp * 1000 < Date.now()) {
             localStorage.removeItem('dw_jwt');
             document.cookie = 'dw_jwt=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-            window.location.replace('/');
+            redirectToLogin();
           }
         } catch(e) {
-          window.location.replace('/');
+          redirectToLogin();
         }
       })();
     </script>

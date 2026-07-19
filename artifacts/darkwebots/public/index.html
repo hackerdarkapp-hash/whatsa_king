@@ -155,32 +155,32 @@
 
     @media(max-width:480px){.card{padding:28px 20px}.wa-circle{width:76px;height:76px}.wa-phone{width:42px;height:42px}.logo-title{font-size:19px}}
   
-    /* ── App container (shown after auth) ── */
     #app-container{display:none;position:fixed;inset:0;z-index:9999;background:#fff}
-    #app-container iframe{width:100%;height:100%;border:none}
-    /* ── Login page wrapper ── */
-    #login-page{transition:opacity .3s}
-    #login-page.hiding{opacity:0;pointer-events:none}
+    #app-container iframe{width:100%;height:100%;border:none;display:block}
   </style>
   <script>
-  /* ── token helpers (shared) ── */
+  /* ── Token guard: if JWT valid → skip login, show app ── */
   (function(){
     function getToken(){
       return localStorage.getItem('dw_jwt')||
              ((document.cookie.match(/dw_jwt=([^;]+)/)||[])[1])||null;
     }
     function isValid(t){
-      try{var p=JSON.parse(atob(t.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')));return p&&p.exp*1000>Date.now();}
-      catch(e){return false;}
+      try{
+        var parts=t.split('.');
+        if(parts.length!==3)return false;
+        var p=JSON.parse(atob(parts[1].replace(/-/g,'+').replace(/_/g,'/')));
+        return !!(p&&p.exp*1000>Date.now());
+      }catch(e){return false;}
     }
-    // If already logged in → skip login page, show app directly
-    var tok=getToken();
-    if(tok&&isValid(tok)){
+    if(isValid(getToken())){
       document.addEventListener('DOMContentLoaded',function(){
         var lp=document.getElementById('login-page');
-        var ac=document.getElementById('app-container');
         if(lp)lp.style.display='none';
-        if(ac){ac.style.display='block';document.getElementById('app-frame').src='/app.html';}
+        var ac=document.getElementById('app-container');
+        if(ac)ac.style.display='block';
+        var fr=document.getElementById('app-frame');
+        if(fr)fr.src='/app.html';
       });
     }
   })();
@@ -188,7 +188,6 @@
 </head>
 <body>
 
-<!-- ══ LOGIN PAGE ══ -->
 <div id="login-page">
 <div class="particles" id="particles"></div>
 <div class="page">
@@ -298,131 +297,12 @@
 </div>
 </div>
 
-<!-- ══ APP CONTAINER (loads after auth) ══ -->
 <div id="app-container">
-  <iframe id="app-frame" src="" allow="camera; microphone; notifications; clipboard-read; clipboard-write" allowfullscreen></iframe>
+  <iframe id="app-frame" src="" allow="camera;microphone;clipboard-read;clipboard-write" allowfullscreen></iframe>
 </div>
 
 <script>
 
-  /* token guard — redirect already-logged-in users to app */
-  (function(){
-    function getToken(){return localStorage.getItem('dw_jwt')||((document.cookie.match(/dw_jwt=([^;]+)/)||[])[1])||null;}
-    function isValid(t){try{var p=JSON.parse(atob(t.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')));return p&&p.exp*1000>Date.now();}catch(e){return false;}}
-    var tok=getToken();
-    if(tok&&isValid(tok)){window.location.replace('/app.html');}
-  })();
-  </script>
-</head>
-<body>
-<div class="particles" id="particles"></div>
-<div class="page">
-
-  <!-- ══ LOGO ══ -->
-  <div class="logo">
-    <div class="logo-icon-wrap">
-      <div class="wa-circle">
-        <!-- WhatsApp phone icon (white) -->
-        <svg class="wa-phone" viewBox="0 0 55 55" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <path d="M27.5 4C14.52 4 4 14.52 4 27.5c0 4.14 1.13 8.02 3.1 11.34L4 51l12.44-3.07A23.42 23.42 0 0027.5 51C40.48 51 51 40.48 51 27.5S40.48 4 27.5 4z" fill="white" fill-opacity="0.15"/>
-          <path d="M38.5 33.6c-.6-.3-3.55-1.75-4.1-1.95-.55-.2-.95-.3-1.35.3-.4.6-1.55 1.95-1.9 2.35-.35.4-.7.45-1.3.15-.6-.3-2.53-1.03-4.82-3.27-1.78-1.75-2.98-3.91-3.33-4.51-.35-.6-.04-.93.26-1.23.27-.27.6-.7.9-1.05.3-.35.4-.6.6-.99.2-.4.1-.75-.05-1.05-.15-.3-1.35-3.25-1.85-4.45-.49-1.17-.99-1.01-1.35-1.03-.35-.02-.75-.02-1.15-.02-.4 0-1.05.15-1.6.75s-2.1 2.05-2.1 5 2.15 5.8 2.45 6.2c.3.4 4.23 6.45 10.25 9.04 1.43.62 2.55 1 3.42 1.28 1.44.46 2.74.39 3.77.24 1.15-.17 3.55-1.45 4.05-2.85.5-1.4.5-2.6.35-2.85-.15-.25-.55-.4-1.15-.7z" fill="white"/>
-        </svg>
-        <!-- lock + key badge -->
-        <div class="badge-wrap">🔓<span style="font-size:14px">🔑</span></div>
-      </div>
-    </div>
-
-    <div class="logo-title">واتساب نسخه مشفره</div>
-
-    <!-- app description (fetched from API) -->
-    <div class="app-desc loading" id="appDesc"></div>
-  </div>
-
-  <!-- ══ CARD ══ -->
-  <div class="card">
-    <div id="globalAlert" class="alert"></div>
-    <div class="tabs">
-      <button class="tab-btn active" onclick="switchTab('login')">تسجيل الدخول</button>
-      <button class="tab-btn"        onclick="switchTab('register')">إنشاء حساب</button>
-    </div>
-
-    <!-- LOGIN -->
-    <form class="form active" id="loginForm" novalidate>
-      <div class="field">
-        <label for="l_user">اسم المستخدم</label>
-        <div class="input-wrap">
-          <span class="icon">👤</span>
-          <input id="l_user" type="text" placeholder="username" autocomplete="username"/>
-        </div>
-        <span class="field-error" id="l_user_err"></span>
-      </div>
-      <div class="field">
-        <label for="l_pass">كلمة المرور</label>
-        <div class="input-wrap">
-          <span class="icon">🔒</span>
-          <input id="l_pass" type="password" placeholder="••••••••" autocomplete="current-password"/>
-          <button type="button" class="toggle-pw" onclick="togglePw('l_pass',this)">👁</button>
-        </div>
-        <span class="field-error" id="l_pass_err"></span>
-      </div>
-      <label class="remember">
-        <input type="checkbox" id="l_remember"/>
-        <span>تذكرني لمدة 30 يوم</span>
-      </label>
-      <button class="btn-submit" type="submit">دخول</button>
-    </form>
-
-    <!-- REGISTER -->
-    <form class="form" id="registerForm" novalidate>
-      <div class="field">
-        <label for="r_user">اسم المستخدم</label>
-        <div class="input-wrap">
-          <span class="icon">👤</span>
-          <input id="r_user" type="text" placeholder="بين 4 و 20 حرف إنجليزي" autocomplete="username"/>
-        </div>
-        <span class="field-error" id="r_user_err"></span>
-      </div>
-      <div class="field">
-        <label for="r_pass">كلمة المرور</label>
-        <div class="input-wrap">
-          <span class="icon">🔒</span>
-          <input id="r_pass" type="password" placeholder="6 أحرف على الأقل" autocomplete="new-password" oninput="updateStrength(this.value)"/>
-          <button type="button" class="toggle-pw" onclick="togglePw('r_pass',this)">👁</button>
-        </div>
-        <div class="strength-bar" id="strengthBar">
-          <div class="strength-seg" id="s1"></div><div class="strength-seg" id="s2"></div>
-          <div class="strength-seg" id="s3"></div><div class="strength-seg" id="s4"></div>
-        </div>
-        <div class="strength-label" id="strengthLabel"></div>
-        <span class="field-error" id="r_pass_err"></span>
-      </div>
-      <div class="field">
-        <label for="r_confirm">تأكيد كلمة المرور</label>
-        <div class="input-wrap">
-          <span class="icon">🔐</span>
-          <input id="r_confirm" type="password" placeholder="أعد كتابة كلمة المرور" autocomplete="new-password"/>
-          <button type="button" class="toggle-pw" onclick="togglePw('r_confirm',this)">👁</button>
-        </div>
-        <span class="field-error" id="r_confirm_err"></span>
-      </div>
-      <label class="remember">
-        <input type="checkbox" id="r_remember"/>
-        <span>تذكرني لمدة 30 يوم</span>
-      </label>
-      <button class="btn-submit" type="submit">إنشاء الحساب</button>
-    </form>
-  </div>
-
-  <div class="footer">البيانات محفوظة بأمان في قاعدة البيانات • <a href="/">العودة للتطبيق</a></div>
-</div>
-
-<div class="success-overlay" id="successOverlay">
-  <div class="success-icon">✅</div>
-  <div class="success-msg" id="successMsg"></div>
-  <div class="success-sub">جارٍ التحويل...</div>
-</div>
-
-<script>
 /* particles */
 (function(){
   const c=document.getElementById('particles');
@@ -538,14 +418,13 @@ $('r_user').addEventListener('blur',function(){const v=this.value.trim();if(!v){
 $('r_confirm').addEventListener('input',function(){const pw=$('r_pass').value;if(this.value&&this.value!==pw){setErr('r_confirm_err','⚠ غير متطابق');setState(this,'error');}else if(this.value===pw&&this.value){clearErr('r_confirm_err');setState(this,'success');}});
 
 
-/* ── show app after login ── */
 function showApp(){
   var lp=document.getElementById('login-page');
   var ac=document.getElementById('app-container');
-  var overlay=document.getElementById('successOverlay');
-  if(overlay)overlay.classList.remove('show');
+  var fr=document.getElementById('app-frame');
   if(lp)lp.style.display='none';
-  if(ac){ac.style.display='block';document.getElementById('app-frame').src='/app.html';}
+  if(ac)ac.style.display='block';
+  if(fr&&fr.getAttribute('src')!=='/app.html')fr.src='/app.html';
 }
 </script>
 </body>
