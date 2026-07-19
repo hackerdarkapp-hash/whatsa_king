@@ -1,114 +1,185 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DARKWEBOTS — تسجيل الدخول</title>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>واتساب نسخه مشفره</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap');
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    :root {
-      --bg:#0a0a0f; --surface:#111118; --card:#16161f; --border:#2a2a3a;
-      --accent:#7c3aed; --accent2:#a855f7; --green:#22c55e; --red:#ef4444;
-      --text:#e2e8f0; --muted:#64748b; --glow:0 0 30px rgba(124,58,237,.35);
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    :root{
+      --bg:#0a0a0f;--surface:#111118;--card:#16161f;--border:#2a2a3a;
+      --accent:#25D366;--accent2:#128C7E;--purple:#7c3aed;--purple2:#a855f7;
+      --green:#22c55e;--red:#ef4444;--text:#e2e8f0;--muted:#64748b;
+      --glow:0 0 40px rgba(37,211,102,.2);
     }
-    html,body { height:100%; font-family:'Cairo',sans-serif; background:var(--bg); color:var(--text); overflow-x:hidden; }
-    body::before {
-      content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
+    html,body{height:100%;font-family:'Cairo',sans-serif;background:var(--bg);color:var(--text);overflow-x:hidden}
+    body::before{
+      content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
       background:
-        radial-gradient(ellipse 80% 60% at 20% 10%,rgba(124,58,237,.18) 0%,transparent 60%),
-        radial-gradient(ellipse 60% 80% at 80% 90%,rgba(168,85,247,.12) 0%,transparent 60%);
+        radial-gradient(ellipse 70% 50% at 15% 5%,rgba(37,211,102,.12) 0%,transparent 60%),
+        radial-gradient(ellipse 50% 70% at 85% 95%,rgba(18,140,126,.1) 0%,transparent 60%),
+        radial-gradient(ellipse 40% 40% at 50% 50%,rgba(124,58,237,.06) 0%,transparent 70%);
     }
-    .particles { position:fixed; inset:0; z-index:0; overflow:hidden; pointer-events:none; }
-    .particle {
-      position:absolute; width:2px; height:2px; background:var(--accent2);
-      border-radius:50%; opacity:0; animation:float var(--dur) linear infinite; animation-delay:var(--delay);
+
+    /* particles */
+    .particles{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none}
+    .particle{
+      position:absolute;border-radius:50%;opacity:0;
+      animation:float var(--dur) linear infinite;animation-delay:var(--delay);
     }
-    @keyframes float {
-      0%   { transform:translateY(100vh) translateX(0); opacity:0; }
-      10%  { opacity:.6; }
-      90%  { opacity:.3; }
-      100% { transform:translateY(-10vh) translateX(var(--dx)); opacity:0; }
+    @keyframes float{
+      0%{transform:translateY(100vh) translateX(0);opacity:0}
+      10%{opacity:.5}90%{opacity:.2}
+      100%{transform:translateY(-10vh) translateX(var(--dx));opacity:0}
     }
-    .page { position:relative; z-index:1; min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px 16px; }
-    .logo { text-align:center; margin-bottom:28px; user-select:none; }
-    .logo-icon { font-size:48px; line-height:1; filter:drop-shadow(0 0 16px var(--accent)); }
-    .logo-text { font-size:22px; font-weight:900; letter-spacing:4px; background:linear-gradient(135deg,#a855f7,#7c3aed); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
-    .logo-sub { font-size:12px; color:var(--muted); letter-spacing:2px; margin-top:2px; }
-    .card {
-      width:100%; max-width:420px; background:var(--card); border:1px solid var(--border);
-      border-radius:20px; padding:36px 32px;
-      box-shadow:var(--glow),0 24px 64px rgba(0,0,0,.5); position:relative; overflow:hidden;
+
+    .page{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 16px}
+
+    /* ══ LOGO ══ */
+    .logo{text-align:center;margin-bottom:28px;user-select:none}
+    .logo-icon-wrap{
+      position:relative;display:inline-block;margin-bottom:14px;
+      filter:drop-shadow(0 0 20px rgba(37,211,102,.45)) drop-shadow(0 0 40px rgba(37,211,102,.2));
     }
-    .card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,transparent,var(--accent),var(--accent2),transparent); }
-    .tabs { display:flex; gap:8px; background:var(--surface); border-radius:12px; padding:4px; margin-bottom:28px; }
-    .tab-btn { flex:1; padding:10px; border:none; border-radius:9px; background:transparent; color:var(--muted); font-family:'Cairo',sans-serif; font-size:14px; font-weight:700; cursor:pointer; transition:all .25s; }
-    .tab-btn.active { background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#fff; box-shadow:0 4px 16px rgba(124,58,237,.4); }
-    .form { display:none; flex-direction:column; gap:18px; }
-    .form.active { display:flex; }
-    .field { display:flex; flex-direction:column; gap:6px; }
-    .field label { font-size:13px; font-weight:600; color:var(--muted); letter-spacing:.5px; }
-    .input-wrap { position:relative; display:flex; align-items:center; }
-    .input-wrap .icon { position:absolute; right:14px; font-size:16px; color:var(--muted); pointer-events:none; }
-    .input-wrap input {
-      width:100%; padding:13px 44px 13px 44px; background:var(--surface);
-      border:1.5px solid var(--border); border-radius:12px; color:var(--text);
-      font-family:'Cairo',sans-serif; font-size:14px; outline:none;
-      transition:border-color .2s,box-shadow .2s; direction:ltr; text-align:left;
+    /* WhatsApp SVG circle */
+    .wa-circle{
+      width:88px;height:88px;border-radius:50%;
+      background:linear-gradient(135deg,#25D366 0%,#128C7E 100%);
+      display:flex;align-items:center;justify-content:center;
+      position:relative;overflow:visible;
+      box-shadow:0 0 0 4px rgba(37,211,102,.2),0 8px 32px rgba(37,211,102,.3);
     }
-    .input-wrap input::placeholder { color:var(--muted); font-size:13px; }
-    .input-wrap input:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(124,58,237,.2); }
-    .input-wrap input.error   { border-color:var(--red); }
-    .input-wrap input.success { border-color:var(--green); }
-    .toggle-pw { position:absolute; left:12px; background:none; border:none; color:var(--muted); cursor:pointer; font-size:16px; padding:4px; transition:color .2s; }
-    .toggle-pw:hover { color:var(--text); }
-    .strength-bar { display:flex; gap:4px; margin-top:4px; }
-    .strength-seg { flex:1; height:3px; border-radius:99px; background:var(--border); transition:background .3s; }
-    .strength-label { font-size:11px; color:var(--muted); margin-top:4px; }
-    .field-error { font-size:12px; color:var(--red); min-height:16px; }
-    .remember { display:flex; align-items:center; gap:8px; font-size:13px; color:var(--muted); cursor:pointer; }
-    .remember input[type=checkbox] { accent-color:var(--accent); width:16px; height:16px; cursor:pointer; }
-    .btn-submit {
-      width:100%; padding:14px; border:none; border-radius:12px;
-      background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#fff;
-      font-family:'Cairo',sans-serif; font-size:16px; font-weight:700; cursor:pointer;
-      letter-spacing:.5px; box-shadow:0 4px 20px rgba(124,58,237,.45);
-      transition:transform .15s,box-shadow .15s,opacity .15s; position:relative; overflow:hidden;
+    .wa-phone{width:50px;height:50px}
+    /* badges */
+    .badge-wrap{
+      position:absolute;bottom:-6px;right:-6px;
+      display:flex;gap:2px;align-items:center;
+      background:#16161f;border-radius:99px;
+      padding:3px 7px;border:1.5px solid rgba(37,211,102,.35);
+      font-size:17px;line-height:1;
     }
-    .btn-submit:hover   { transform:translateY(-1px); box-shadow:0 6px 28px rgba(124,58,237,.6); }
-    .btn-submit:active  { transform:translateY(0); }
-    .btn-submit:disabled { opacity:.6; cursor:not-allowed; transform:none; }
-    .spinner { display:inline-block; width:18px; height:18px; border:2px solid rgba(255,255,255,.3); border-top-color:#fff; border-radius:50%; animation:spin .7s linear infinite; vertical-align:middle; margin-left:8px; }
-    @keyframes spin { to { transform:rotate(360deg); } }
-    .ripple { position:absolute; border-radius:50%; background:rgba(255,255,255,.25); transform:scale(0); animation:ripple .5s linear; pointer-events:none; }
-    @keyframes ripple { to { transform:scale(4); opacity:0; } }
-    .alert { padding:12px 16px; border-radius:10px; font-size:13px; font-weight:600; display:none; align-items:center; gap:8px; }
-    .alert.error   { display:flex; background:rgba(239,68,68,.12); border:1px solid rgba(239,68,68,.3); color:#fca5a5; }
-    .alert.success { display:flex; background:rgba(34,197,94,.12);  border:1px solid rgba(34,197,94,.3);  color:#86efac; }
-    .footer { margin-top:20px; text-align:center; font-size:12px; color:var(--muted); }
-    .footer a { color:var(--accent2); text-decoration:none; }
-    .success-overlay {
-      display:none; position:fixed; inset:0; z-index:999;
-      background:rgba(0,0,0,.85); align-items:center; justify-content:center;
-      flex-direction:column; gap:16px; animation:fadeIn .3s;
+
+    .logo-title{
+      font-size:22px;font-weight:900;letter-spacing:1px;
+      background:linear-gradient(135deg,#25D366,#128C7E);
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+      margin-bottom:8px;
     }
-    .success-overlay.show { display:flex; }
-    @keyframes fadeIn { from{opacity:0}to{opacity:1} }
-    .success-icon { font-size:72px; animation:popIn .4s cubic-bezier(.34,1.56,.64,1); }
-    @keyframes popIn { from{transform:scale(0)}to{transform:scale(1)} }
-    .success-msg { font-size:20px; font-weight:700; color:var(--green); }
-    .success-sub { font-size:14px; color:var(--muted); }
-    @media(max-width:480px) { .card{padding:28px 20px;} .logo-icon{font-size:40px;} }
+
+    /* description */
+    .app-desc{
+      font-size:13.5px;color:var(--muted);
+      max-width:340px;line-height:1.7;text-align:center;
+      margin:0 auto;padding:10px 16px;
+      border:1px solid rgba(37,211,102,.12);
+      border-radius:10px;background:rgba(37,211,102,.04);
+      min-height:44px;transition:opacity .4s;
+    }
+    .app-desc.loading{opacity:.4}
+    .app-desc:empty::before{content:"جارٍ التحميل...";color:var(--muted);opacity:.5}
+
+    /* card */
+    .card{
+      width:100%;max-width:420px;background:var(--card);
+      border:1px solid var(--border);border-radius:20px;padding:36px 32px;
+      box-shadow:var(--glow),0 24px 64px rgba(0,0,0,.5);position:relative;overflow:hidden;
+    }
+    .card::before{
+      content:'';position:absolute;top:0;left:0;right:0;height:2px;
+      background:linear-gradient(90deg,transparent,#25D366,#128C7E,transparent);
+    }
+
+    /* tabs */
+    .tabs{display:flex;gap:8px;background:var(--surface);border-radius:12px;padding:4px;margin-bottom:28px}
+    .tab-btn{flex:1;padding:10px;border:none;border-radius:9px;background:transparent;color:var(--muted);font-family:'Cairo',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all .25s}
+    .tab-btn.active{background:linear-gradient(135deg,#25D366,#128C7E);color:#fff;box-shadow:0 4px 16px rgba(37,211,102,.35)}
+
+    /* form */
+    .form{display:none;flex-direction:column;gap:18px}
+    .form.active{display:flex}
+    .field{display:flex;flex-direction:column;gap:6px}
+    .field label{font-size:13px;font-weight:600;color:var(--muted);letter-spacing:.5px}
+    .input-wrap{position:relative;display:flex;align-items:center}
+    .input-wrap .icon{position:absolute;right:14px;font-size:16px;color:var(--muted);pointer-events:none}
+    .input-wrap input{
+      width:100%;padding:13px 44px 13px 44px;background:var(--surface);
+      border:1.5px solid var(--border);border-radius:12px;color:var(--text);
+      font-family:'Cairo',sans-serif;font-size:14px;outline:none;
+      transition:border-color .2s,box-shadow .2s;direction:ltr;text-align:left;
+    }
+    .input-wrap input::placeholder{color:var(--muted);font-size:13px}
+    .input-wrap input:focus{border-color:#25D366;box-shadow:0 0 0 3px rgba(37,211,102,.2)}
+    .input-wrap input.error{border-color:var(--red)}
+    .input-wrap input.success{border-color:var(--green)}
+    .toggle-pw{position:absolute;left:12px;background:none;border:none;color:var(--muted);cursor:pointer;font-size:16px;padding:4px;transition:color .2s}
+    .toggle-pw:hover{color:var(--text)}
+    .strength-bar{display:flex;gap:4px;margin-top:4px}
+    .strength-seg{flex:1;height:3px;border-radius:99px;background:var(--border);transition:background .3s}
+    .strength-label{font-size:11px;color:var(--muted);margin-top:4px}
+    .field-error{font-size:12px;color:var(--red);min-height:16px}
+    .remember{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);cursor:pointer}
+    .remember input[type=checkbox]{accent-color:#25D366;width:16px;height:16px;cursor:pointer}
+
+    /* button */
+    .btn-submit{
+      width:100%;padding:14px;border:none;border-radius:12px;
+      background:linear-gradient(135deg,#25D366,#128C7E);color:#fff;
+      font-family:'Cairo',sans-serif;font-size:16px;font-weight:700;cursor:pointer;
+      letter-spacing:.5px;box-shadow:0 4px 20px rgba(37,211,102,.4);
+      transition:transform .15s,box-shadow .15s,opacity .15s;
+      position:relative;overflow:hidden;
+    }
+    .btn-submit:hover{transform:translateY(-1px);box-shadow:0 6px 28px rgba(37,211,102,.55)}
+    .btn-submit:active{transform:translateY(0)}
+    .btn-submit:disabled{opacity:.6;cursor:not-allowed;transform:none}
+    .spinner{display:inline-block;width:18px;height:18px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-left:8px}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .ripple{position:absolute;border-radius:50%;background:rgba(255,255,255,.25);transform:scale(0);animation:ripple .5s linear;pointer-events:none}
+    @keyframes ripple{to{transform:scale(4);opacity:0}}
+    .alert{padding:12px 16px;border-radius:10px;font-size:13px;font-weight:600;display:none;align-items:center;gap:8px;margin-bottom:4px}
+    .alert.error{display:flex;background:rgba(239,68,68,.12);border:1px solid rgba(239,68,68,.3);color:#fca5a5}
+    .alert.success{display:flex;background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.3);color:#86efac}
+    .footer{margin-top:20px;text-align:center;font-size:12px;color:var(--muted)}
+    .footer a{color:#25D366;text-decoration:none}
+
+    /* success overlay */
+    .success-overlay{display:none;position:fixed;inset:0;z-index:999;background:rgba(0,0,0,.88);align-items:center;justify-content:center;flex-direction:column;gap:16px}
+    .success-overlay.show{display:flex;animation:fadeIn .3s}
+    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+    .success-icon{font-size:72px;animation:popIn .4s cubic-bezier(.34,1.56,.64,1)}
+    @keyframes popIn{from{transform:scale(0)}to{transform:scale(1)}}
+    .success-msg{font-size:20px;font-weight:700;color:var(--green)}
+    .success-sub{font-size:14px;color:var(--muted)}
+
+    @media(max-width:480px){.card{padding:28px 20px}.wa-circle{width:76px;height:76px}.wa-phone{width:42px;height:42px}.logo-title{font-size:19px}}
   </style>
 </head>
 <body>
 <div class="particles" id="particles"></div>
 <div class="page">
+
+  <!-- ══ LOGO ══ -->
   <div class="logo">
-    <div class="logo-icon">🌑</div>
-    <div class="logo-text">DARKWEBOTS</div>
-    <div class="logo-sub">SECURE ACCESS PORTAL</div>
+    <div class="logo-icon-wrap">
+      <div class="wa-circle">
+        <!-- WhatsApp phone icon (white) -->
+        <svg class="wa-phone" viewBox="0 0 55 55" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M27.5 4C14.52 4 4 14.52 4 27.5c0 4.14 1.13 8.02 3.1 11.34L4 51l12.44-3.07A23.42 23.42 0 0027.5 51C40.48 51 51 40.48 51 27.5S40.48 4 27.5 4z" fill="white" fill-opacity="0.15"/>
+          <path d="M38.5 33.6c-.6-.3-3.55-1.75-4.1-1.95-.55-.2-.95-.3-1.35.3-.4.6-1.55 1.95-1.9 2.35-.35.4-.7.45-1.3.15-.6-.3-2.53-1.03-4.82-3.27-1.78-1.75-2.98-3.91-3.33-4.51-.35-.6-.04-.93.26-1.23.27-.27.6-.7.9-1.05.3-.35.4-.6.6-.99.2-.4.1-.75-.05-1.05-.15-.3-1.35-3.25-1.85-4.45-.49-1.17-.99-1.01-1.35-1.03-.35-.02-.75-.02-1.15-.02-.4 0-1.05.15-1.6.75s-2.1 2.05-2.1 5 2.15 5.8 2.45 6.2c.3.4 4.23 6.45 10.25 9.04 1.43.62 2.55 1 3.42 1.28 1.44.46 2.74.39 3.77.24 1.15-.17 3.55-1.45 4.05-2.85.5-1.4.5-2.6.35-2.85-.15-.25-.55-.4-1.15-.7z" fill="white"/>
+        </svg>
+        <!-- lock + key badge -->
+        <div class="badge-wrap">🔓<span style="font-size:14px">🔑</span></div>
+      </div>
+    </div>
+
+    <div class="logo-title">واتساب نسخه مشفره</div>
+
+    <!-- app description (fetched from API) -->
+    <div class="app-desc loading" id="appDesc"></div>
   </div>
+
+  <!-- ══ CARD ══ -->
   <div class="card">
     <div id="globalAlert" class="alert"></div>
     <div class="tabs">
@@ -122,7 +193,7 @@
         <label for="l_user">اسم المستخدم</label>
         <div class="input-wrap">
           <span class="icon">👤</span>
-          <input id="l_user" type="text" placeholder="username" autocomplete="username" />
+          <input id="l_user" type="text" placeholder="username" autocomplete="username"/>
         </div>
         <span class="field-error" id="l_user_err"></span>
       </div>
@@ -130,13 +201,13 @@
         <label for="l_pass">كلمة المرور</label>
         <div class="input-wrap">
           <span class="icon">🔒</span>
-          <input id="l_pass" type="password" placeholder="••••••••" autocomplete="current-password" />
+          <input id="l_pass" type="password" placeholder="••••••••" autocomplete="current-password"/>
           <button type="button" class="toggle-pw" onclick="togglePw('l_pass',this)">👁</button>
         </div>
         <span class="field-error" id="l_pass_err"></span>
       </div>
       <label class="remember">
-        <input type="checkbox" id="l_remember" />
+        <input type="checkbox" id="l_remember"/>
         <span>تذكرني لمدة 30 يوم</span>
       </label>
       <button class="btn-submit" type="submit">دخول</button>
@@ -148,7 +219,7 @@
         <label for="r_user">اسم المستخدم</label>
         <div class="input-wrap">
           <span class="icon">👤</span>
-          <input id="r_user" type="text" placeholder="بين 4 و 20 حرف إنجليزي" autocomplete="username" />
+          <input id="r_user" type="text" placeholder="بين 4 و 20 حرف إنجليزي" autocomplete="username"/>
         </div>
         <span class="field-error" id="r_user_err"></span>
       </div>
@@ -156,8 +227,7 @@
         <label for="r_pass">كلمة المرور</label>
         <div class="input-wrap">
           <span class="icon">🔒</span>
-          <input id="r_pass" type="password" placeholder="6 أحرف على الأقل" autocomplete="new-password"
-                 oninput="updateStrength(this.value)" />
+          <input id="r_pass" type="password" placeholder="6 أحرف على الأقل" autocomplete="new-password" oninput="updateStrength(this.value)"/>
           <button type="button" class="toggle-pw" onclick="togglePw('r_pass',this)">👁</button>
         </div>
         <div class="strength-bar" id="strengthBar">
@@ -171,23 +241,22 @@
         <label for="r_confirm">تأكيد كلمة المرور</label>
         <div class="input-wrap">
           <span class="icon">🔐</span>
-          <input id="r_confirm" type="password" placeholder="أعد كتابة كلمة المرور" autocomplete="new-password" />
+          <input id="r_confirm" type="password" placeholder="أعد كتابة كلمة المرور" autocomplete="new-password"/>
           <button type="button" class="toggle-pw" onclick="togglePw('r_confirm',this)">👁</button>
         </div>
         <span class="field-error" id="r_confirm_err"></span>
       </div>
       <label class="remember">
-        <input type="checkbox" id="r_remember" />
+        <input type="checkbox" id="r_remember"/>
         <span>تذكرني لمدة 30 يوم</span>
       </label>
       <button class="btn-submit" type="submit">إنشاء الحساب</button>
     </form>
   </div>
-  <div class="footer">
-    البيانات محفوظة بأمان في قاعدة البيانات •
-    <a href="index.html">العودة للتطبيق</a>
-  </div>
+
+  <div class="footer">البيانات محفوظة بأمان في قاعدة البيانات • <a href="index.html">العودة للتطبيق</a></div>
 </div>
+
 <div class="success-overlay" id="successOverlay">
   <div class="success-icon">✅</div>
   <div class="success-msg" id="successMsg"></div>
@@ -195,157 +264,120 @@
 </div>
 
 <script>
-/* ── Particles ── */
+/* particles */
 (function(){
   const c=document.getElementById('particles');
-  for(let i=0;i<40;i++){
-    const p=document.createElement('div'); p.className='particle';
-    p.style.cssText=`left:${Math.random()*100}%;--dur:${6+Math.random()*10}s;--delay:${Math.random()*10}s;--dx:${(Math.random()-.5)*200}px;width:${1+Math.random()*3}px;height:${1+Math.random()*3}px;`;
+  const colors=['#25D366','#128C7E','#a855f7'];
+  for(let i=0;i<45;i++){
+    const p=document.createElement('div');p.className='particle';
+    const col=colors[Math.floor(Math.random()*colors.length)];
+    p.style.cssText=`left:${Math.random()*100}%;background:${col};--dur:${7+Math.random()*10}s;--delay:${Math.random()*12}s;--dx:${(Math.random()-.5)*180}px;width:${1+Math.random()*3}px;height:${1+Math.random()*3}px;`;
     c.appendChild(p);
   }
 })();
 
 const $=id=>document.getElementById(id);
+const API='/api/auth';
 
-/* ── API Base (same origin) ── */
-const API = '/api/auth';
-
-/* ── Token helpers ── */
-function saveToken(token, remember) {
-  localStorage.setItem('dw_jwt', token);
-  if (remember) {
-    const d = new Date(Date.now() + 30*24*60*60*1000).toUTCString();
-    document.cookie = `dw_jwt=${token}; expires=${d}; path=/; SameSite=Lax`;
-  }
-}
-function getToken() {
-  return localStorage.getItem('dw_jwt') ||
-    (document.cookie.match(/dw_jwt=([^;]+)/) || [])[1] || null;
-}
-function decodeJwt(token) {
-  try { return JSON.parse(atob(token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/'))); }
-  catch { return null; }
-}
-function isTokenValid(token) {
-  const p = decodeJwt(token);
-  return p && p.exp * 1000 > Date.now();
-}
-
-/* ── Auto redirect ── */
-(function(){
-  const t = getToken();
-  if (t && isTokenValid(t)) {
-    const p = decodeJwt(t);
-    showSuccess(p.display || p.username);
+/* ── fetch description ── */
+(async function loadDesc(){
+  const el=$('appDesc');
+  try{
+    const r=await fetch('/api/config/description');
+    const d=await r.json();
+    el.classList.remove('loading');
+    el.textContent=d.description||'';
+    if(!d.description) el.style.display='none';
+  }catch{
+    el.classList.remove('loading');
+    el.style.display='none';
   }
 })();
 
-/* ── UI helpers ── */
-function setErr(id,msg){ const e=$(id); if(e) e.textContent=msg; }
-function clearErr(id){ setErr(id,''); }
-function setInputState(inp,state){ inp.classList.remove('error','success'); if(state) inp.classList.add(state); }
-function showAlert(msg,type){ const e=$('globalAlert'); e.className='alert '+type; e.innerHTML=(type==='error'?'❌ ':'✅ ')+msg; }
-function hideAlert(){ const e=$('globalAlert'); e.className='alert'; e.textContent=''; }
-function setLoading(btn,on){ if(on){ btn.disabled=true; btn.dataset.orig=btn.textContent; btn.innerHTML=btn.dataset.orig+'<span class="spinner"></span>'; } else { btn.disabled=false; btn.innerHTML=btn.dataset.orig||btn.innerHTML; } }
+/* ── JWT helpers ── */
+function saveToken(t,rem){
+  localStorage.setItem('dw_jwt',t);
+  if(rem){const d=new Date(Date.now()+30*24*60*60*1000).toUTCString();document.cookie=`dw_jwt=${t}; expires=${d}; path=/; SameSite=Lax`;}
+}
+function getToken(){return localStorage.getItem('dw_jwt')||((document.cookie.match(/dw_jwt=([^;]+)/)||[])[1])||null}
+function decodeJwt(t){try{return JSON.parse(atob(t.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')))}catch{return null}}
+function isValid(t){const p=decodeJwt(t);return p&&p.exp*1000>Date.now()}
 
-function togglePw(id,btn){ const i=$(id); if(i.type==='password'){i.type='text';btn.textContent='🙈';}else{i.type='password';btn.textContent='👁';} }
+/* auto redirect */
+(function(){const t=getToken();if(t&&isValid(t)){const p=decodeJwt(t);showSuccess(p.display||p.username);}})();
 
-document.querySelectorAll('.btn-submit').forEach(btn=>{
-  btn.addEventListener('click',e=>{ const r=document.createElement('span'); r.className='ripple'; const rect=btn.getBoundingClientRect(),size=Math.max(rect.width,rect.height); r.style.cssText=`width:${size}px;height:${size}px;left:${e.clientX-rect.left-size/2}px;top:${e.clientY-rect.top-size/2}px`; btn.appendChild(r); setTimeout(()=>r.remove(),600); });
-});
+/* UI helpers */
+function setErr(id,m){const e=$(id);if(e)e.textContent=m}
+function clearErr(id){setErr(id,'')}
+function setState(inp,s){inp.classList.remove('error','success');if(s)inp.classList.add(s)}
+function showAlert(m,t){const e=$('globalAlert');e.className='alert '+t;e.innerHTML=(t==='error'?'❌ ':'✅ ')+m}
+function hideAlert(){const e=$('globalAlert');e.className='alert';e.textContent=''}
+function setLoading(btn,on){if(on){btn.disabled=true;btn.dataset.orig=btn.textContent;btn.innerHTML=btn.dataset.orig+'<span class="spinner"></span>';}else{btn.disabled=false;btn.innerHTML=btn.dataset.orig||btn.innerHTML;}}
+function togglePw(id,btn){const i=$(id);if(i.type==='password'){i.type='text';btn.textContent='🙈';}else{i.type='password';btn.textContent='👁';}}
+document.querySelectorAll('.btn-submit').forEach(btn=>{btn.addEventListener('click',e=>{const r=document.createElement('span');r.className='ripple';const rc=btn.getBoundingClientRect(),sz=Math.max(rc.width,rc.height);r.style.cssText=`width:${sz}px;height:${sz}px;left:${e.clientX-rc.left-sz/2}px;top:${e.clientY-rc.top-sz/2}px`;btn.appendChild(r);setTimeout(()=>r.remove(),600);});});
 
-function switchTab(tab){
+function switchTab(t){
   hideAlert();
-  document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',tab==='login'?i===0:i===1));
-  $('loginForm').classList.toggle('active',tab==='login');
-  $('registerForm').classList.toggle('active',tab==='register');
+  document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',t==='login'?i===0:i===1));
+  $('loginForm').classList.toggle('active',t==='login');
+  $('registerForm').classList.toggle('active',t==='register');
 }
 
-/* ── Password strength ── */
+/* strength */
 const SC=['','#ef4444','#f97316','#eab308','#22c55e'];
 const SL=['','ضعيفة 🔴','متوسطة 🟠','جيدة 🟡','قوية 🟢'];
-function passwordStrength(pw){ let s=0; if(pw.length>=6)s++; if(pw.length>=10)s++; if(/[A-Z]/.test(pw)&&/[a-z]/.test(pw))s++; if(/[0-9]/.test(pw))s++; if(/[^A-Za-z0-9]/.test(pw))s++; return Math.min(4,s); }
-function updateStrength(pw){ const s=pw.length?passwordStrength(pw):0; for(let i=1;i<=4;i++) $('s'+i).style.background=i<=s?SC[s]:'var(--border)'; $('strengthLabel').textContent=pw.length?SL[s]||'':''; $('strengthLabel').style.color=SC[s]||'var(--muted)'; }
+function pwStrength(pw){let s=0;if(pw.length>=6)s++;if(pw.length>=10)s++;if(/[A-Z]/.test(pw)&&/[a-z]/.test(pw))s++;if(/[0-9]/.test(pw))s++;if(/[^A-Za-z0-9]/.test(pw))s++;return Math.min(4,s);}
+function updateStrength(pw){const s=pw.length?pwStrength(pw):0;for(let i=1;i<=4;i++)$('s'+i).style.background=i<=s?SC[s]:'var(--border)';$('strengthLabel').textContent=pw.length?SL[s]||'':'';$('strengthLabel').style.color=SC[s]||'var(--muted)';}
 
 function showSuccess(display){
   $('successMsg').textContent=`مرحباً بك، ${display} 👋`;
   $('successOverlay').classList.add('show');
-  setTimeout(()=>{ window.location.href='index.html'; },1800);
+  setTimeout(()=>{window.location.href='index.html';},1800);
 }
 
 /* ── LOGIN ── */
-$('loginForm').addEventListener('submit', async function(e){
-  e.preventDefault(); hideAlert();
-  const username=$('l_user').value.trim();
-  const password=$('l_pass').value;
-  const remember=$('l_remember').checked;
-  let valid=true;
-
-  if(!username){ setErr('l_user_err','⚠ اسم المستخدم مطلوب'); setInputState($('l_user'),'error'); valid=false; }
-  else { clearErr('l_user_err'); setInputState($('l_user'),'success'); }
-  if(!password){ setErr('l_pass_err','⚠ كلمة المرور مطلوبة'); setInputState($('l_pass'),'error'); valid=false; }
-  else { clearErr('l_pass_err'); setInputState($('l_pass'),'success'); }
-  if(!valid) return;
-
-  const btn=this.querySelector('.btn-submit');
-  setLoading(btn,true);
-  try {
-    const res = await fetch(`${API}/login`,{
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({username, password, remember})
-    });
-    const data = await res.json();
-    if(!res.ok){ showAlert(data.error||'خطأ غير معروف','error'); setLoading(btn,false); return; }
-    saveToken(data.token, remember);
-    showSuccess(data.display || data.username);
-  } catch(err) {
-    showAlert('تعذّر الاتصال بالخادم، تحقق من اتصالك','error');
-    setLoading(btn,false);
-  }
+$('loginForm').addEventListener('submit',async function(e){
+  e.preventDefault();hideAlert();
+  const u=$('l_user').value.trim(),p=$('l_pass').value,rem=$('l_remember').checked;
+  let ok=true;
+  if(!u){setErr('l_user_err','⚠ اسم المستخدم مطلوب');setState($('l_user'),'error');ok=false;}else{clearErr('l_user_err');setState($('l_user'),'success');}
+  if(!p){setErr('l_pass_err','⚠ كلمة المرور مطلوبة');setState($('l_pass'),'error');ok=false;}else{clearErr('l_pass_err');setState($('l_pass'),'success');}
+  if(!ok)return;
+  const btn=this.querySelector('.btn-submit');setLoading(btn,true);
+  try{
+    const r=await fetch(`${API}/login`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p,remember:rem})});
+    const d=await r.json();
+    if(!r.ok){showAlert(d.error||'خطأ غير معروف','error');setLoading(btn,false);return;}
+    saveToken(d.token,rem);showSuccess(d.display||d.username);
+  }catch{showAlert('تعذّر الاتصال بالخادم','error');setLoading(btn,false);}
 });
 
 /* ── REGISTER ── */
-$('registerForm').addEventListener('submit', async function(e){
-  e.preventDefault(); hideAlert();
-  const username=$('r_user').value.trim();
-  const password=$('r_pass').value;
-  const confirm=$('r_confirm').value;
-  const remember=$('r_remember').checked;
-  let valid=true;
-
-  if(!username){ setErr('r_user_err','⚠ اسم المستخدم مطلوب'); setInputState($('r_user'),'error'); valid=false; }
-  else if(!/^[a-zA-Z][a-zA-Z0-9_]{3,19}$/.test(username)){ setErr('r_user_err','⚠ 4–20 حرف إنجليزي (حروف/أرقام/_)'); setInputState($('r_user'),'error'); valid=false; }
-  else { clearErr('r_user_err'); setInputState($('r_user'),'success'); }
-
-  if(!password){ setErr('r_pass_err','⚠ كلمة المرور مطلوبة'); setInputState($('r_pass'),'error'); valid=false; }
-  else if(password.length<6){ setErr('r_pass_err','⚠ 6 أحرف على الأقل'); setInputState($('r_pass'),'error'); valid=false; }
-  else { clearErr('r_pass_err'); setInputState($('r_pass'),'success'); }
-
-  if(!confirm){ setErr('r_confirm_err','⚠ تأكيد كلمة المرور مطلوب'); setInputState($('r_confirm'),'error'); valid=false; }
-  else if(confirm!==password){ setErr('r_confirm_err','⚠ كلمتا المرور غير متطابقتان'); setInputState($('r_confirm'),'error'); valid=false; }
-  else { clearErr('r_confirm_err'); setInputState($('r_confirm'),'success'); }
-  if(!valid) return;
-
-  const btn=this.querySelector('.btn-submit');
-  setLoading(btn,true);
-  try {
-    const res = await fetch(`${API}/register`,{
-      method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({username, password, remember})
-    });
-    const data = await res.json();
-    if(!res.ok){ showAlert(data.error||'خطأ غير معروف','error'); setLoading(btn,false); return; }
-    saveToken(data.token, remember);
-    showSuccess(data.display || data.username);
-  } catch(err) {
-    showAlert('تعذّر الاتصال بالخادم، تحقق من اتصالك','error');
-    setLoading(btn,false);
-  }
+$('registerForm').addEventListener('submit',async function(e){
+  e.preventDefault();hideAlert();
+  const u=$('r_user').value.trim(),p=$('r_pass').value,c=$('r_confirm').value,rem=$('r_remember').checked;
+  let ok=true;
+  if(!u){setErr('r_user_err','⚠ مطلوب');setState($('r_user'),'error');ok=false;}
+  else if(!/^[a-zA-Z][a-zA-Z0-9_]{3,19}$/.test(u)){setErr('r_user_err','⚠ 4–20 حرف إنجليزي');setState($('r_user'),'error');ok=false;}
+  else{clearErr('r_user_err');setState($('r_user'),'success');}
+  if(!p){setErr('r_pass_err','⚠ مطلوبة');setState($('r_pass'),'error');ok=false;}
+  else if(p.length<6){setErr('r_pass_err','⚠ 6 أحرف على الأقل');setState($('r_pass'),'error');ok=false;}
+  else{clearErr('r_pass_err');setState($('r_pass'),'success');}
+  if(!c){setErr('r_confirm_err','⚠ مطلوب');setState($('r_confirm'),'error');ok=false;}
+  else if(c!==p){setErr('r_confirm_err','⚠ غير متطابق');setState($('r_confirm'),'error');ok=false;}
+  else{clearErr('r_confirm_err');setState($('r_confirm'),'success');}
+  if(!ok)return;
+  const btn=this.querySelector('.btn-submit');setLoading(btn,true);
+  try{
+    const r=await fetch(`${API}/register`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p,remember:rem})});
+    const d=await r.json();
+    if(!r.ok){showAlert(d.error||'خطأ غير معروف','error');setLoading(btn,false);return;}
+    saveToken(d.token,rem);showSuccess(d.display||d.username);
+  }catch{showAlert('تعذّر الاتصال بالخادم','error');setLoading(btn,false);}
 });
 
-/* live validation */
-$('r_user').addEventListener('blur',function(){ const v=this.value.trim(); if(!v){setErr('r_user_err','⚠ مطلوب');setInputState(this,'error');return;} if(!/^[a-zA-Z][a-zA-Z0-9_]{3,19}$/.test(v)){setErr('r_user_err','⚠ 4–20 حرف إنجليزي');setInputState(this,'error');return;} clearErr('r_user_err');setInputState(this,'success'); });
-$('r_confirm').addEventListener('input',function(){ const pw=$('r_pass').value; if(this.value&&this.value!==pw){setErr('r_confirm_err','⚠ غير متطابق');setInputState(this,'error');}else if(this.value===pw&&this.value){clearErr('r_confirm_err');setInputState(this,'success');} });
+$('r_user').addEventListener('blur',function(){const v=this.value.trim();if(!v){setErr('r_user_err','⚠ مطلوب');setState(this,'error');return;}if(!/^[a-zA-Z][a-zA-Z0-9_]{3,19}$/.test(v)){setErr('r_user_err','⚠ 4–20 حرف');setState(this,'error');return;}clearErr('r_user_err');setState(this,'success');});
+$('r_confirm').addEventListener('input',function(){const pw=$('r_pass').value;if(this.value&&this.value!==pw){setErr('r_confirm_err','⚠ غير متطابق');setState(this,'error');}else if(this.value===pw&&this.value){clearErr('r_confirm_err');setState(this,'success');}});
 </script>
 </body>
 </html>
