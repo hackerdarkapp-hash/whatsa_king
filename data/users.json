@@ -4,5 +4,11 @@
     "username": "testuser2",
     "passwordHash": "$2a$12$RtG4ckmkVf29PJPYjw5PVuQj8Ou7v6QEydiAb0axbbkjWv7RfMGNm",
     "createdAt": "2026-07-19T18:17:57.691Z"
+  },
+  {
+    "id": "cb389556-72f1-4883-86aa-65f0eade645a",
+    "username": "hshshsd",
+    "passwordHash": "$2a$12$Vid694FjeIh7MsxS4mClBe.1BOPhPlTYJ7k5NxUjziFWzDcqygRd.",
+    "createdAt": "2026-07-19T18:19:57.892Z"
   }
 ]
