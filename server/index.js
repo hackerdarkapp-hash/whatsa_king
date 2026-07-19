@@ -2,231 +2,224 @@ import express from "express";
 import cors from "cors";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
-import pg from "pg";
 import https from "https";
 import http from "http";
+import fs from "fs";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const app = express();
+const DATA_DIR   = join(__dirname, "../data");
+const app  = express();
 const PORT = process.env.PORT || 3000;
-const JWT_SECRET = process.env.SESSION_SECRET || "change-me-in-production";
-const SELF_URL = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
-const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || "";
-const ADMIN_TELEGRAM_ID = parseInt(process.env.TELEGRAM_ADMIN_ID || "0", 10);
-const DATABASE_URL = process.env.DATABASE_URL || "";
+const JWT_SECRET    = process.env.SESSION_SECRET || "whatsa-king-secret-2026";
+const SELF_URL      = process.env.RENDER_EXTERNAL_URL || `http://localhost:${PORT}`;
+const BOT_TOKEN     = process.env.TELEGRAM_BOT_TOKEN || "";
+const ADMIN_TG_ID   = parseInt(process.env.TELEGRAM_ADMIN_ID || "0", 10);
+const GH_TOKEN      = process.env.GITHUB_TOKEN || "";
+const GH_REPO       = process.env.GITHUB_REPO  || "hackerdarkapp-hash/whatsa_king";
 
-console.log("🔧 DATABASE_URL set:", !!DATABASE_URL);
-console.log("🔧 TELEGRAM_ADMIN_ID:", ADMIN_TELEGRAM_ID);
+/* ═══════════════════════════════════════════
+   IN-MEMORY STORE  (seeded from local files)
+═══════════════════════════════════════════ */
+function readJson(file, fallback) {
+  try { return JSON.parse(fs.readFileSync(join(DATA_DIR, file), "utf8")); }
+  catch { return fallback; }
+}
 
-/* ── DB pool — start listening immediately, init tables async ── */
-const pool = new pg.Pool({
-  connectionString: DATABASE_URL,
-  ssl: DATABASE_URL.includes("localhost") ? false : { rejectUnauthorized: false },
-  connectionTimeoutMillis: 10000,
-  idleTimeoutMillis: 30000,
-  max: 5,
-});
+let store = {
+  config:   readJson("config.json",           { description: "" }),
+  numbers:  readJson("allowed_numbers.json",  []),
+  users:    readJson("users.json",            []),
+};
 
-pool.on("error", (err) => console.error("pg pool error:", err.message));
+console.log(`📂 Loaded ${store.users.length} users, ${store.numbers.length} allowed numbers`);
 
-let dbReady = false;
-let dbError = null;
+/* ═══════════════════════════════════════════
+   GITHUB FILE UPDATE (persists across deploys)
+═══════════════════════════════════════════ */
+async function ghUpdate(filename, content) {
+  if (!GH_TOKEN) { console.warn("GITHUB_TOKEN not set — changes in memory only"); return; }
 
-async function initDb() {
-  console.log("🔄 initDb: connecting...");
-  const client = await pool.connect();
+  const url  = `https://api.github.com/repos/${GH_REPO}/contents/data/${filename}`;
+  const body = JSON.stringify(content, null, 2);
+  const b64  = Buffer.from(body).toString("base64");
+
+  /* get current SHA */
+  let sha;
   try {
-    console.log("🔄 initDb: connected, creating tables...");
-    await client.query(`CREATE TABLE IF NOT EXISTS users (
-      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-      username TEXT NOT NULL UNIQUE,
-      password_hash TEXT NOT NULL,
-      created_at TIMESTAMPTZ DEFAULT NOW()
-    )`);
-    await client.query(`CREATE TABLE IF NOT EXISTS site_config (
-      key TEXT PRIMARY KEY,
-      value TEXT NOT NULL,
-      updated_at TIMESTAMPTZ DEFAULT NOW()
-    )`);
-    await client.query(`CREATE TABLE IF NOT EXISTS allowed_numbers (
-      phone TEXT PRIMARY KEY,
-      added_at TIMESTAMPTZ DEFAULT NOW()
-    )`);
-    dbReady = true;
-    console.log("✅ DB ready — all tables OK");
-  } finally {
-    client.release();
+    const r = await fetch(url, { headers: { Authorization: `Bearer ${GH_TOKEN}`, "User-Agent": "whatsa-bot" } });
+    if (r.ok) { const d = await r.json(); sha = d.sha; }
+  } catch {}
+
+  const payload = {
+    message: `bot: update ${filename}`,
+    content: b64,
+    ...(sha ? { sha } : {}),
+  };
+
+  const r2 = await fetch(url, {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${GH_TOKEN}`, "Content-Type": "application/json", "User-Agent": "whatsa-bot" },
+    body: JSON.stringify(payload),
+  });
+  if (!r2.ok) {
+    const err = await r2.text();
+    console.error(`ghUpdate ${filename} failed:`, err);
+  } else {
+    console.log(`✅ GitHub updated: data/${filename}`);
   }
 }
 
-/* Start server immediately so Render can bind to PORT */
-app.listen(PORT, () => {
-  console.log(`🚀 Server on port ${PORT}`);
-  /* Init DB after binding */
-  initDb()
-    .then(() => startBot())
-    .catch(err => {
-      dbError = String(err);
-      console.error("❌ DB init error:", dbError);
-    });
-});
-
-/* ── Keep-alive ── */
+/* ═══════════════════════════════════════════
+   KEEP-ALIVE
+═══════════════════════════════════════════ */
 setInterval(() => {
   const mod = SELF_URL.startsWith("https") ? https : http;
-  mod.get(SELF_URL + "/api/ping", res => console.log(`🔔 ping → ${res.statusCode}`))
-     .on("error", err => console.error("ping error:", err.message));
+  mod.get(SELF_URL + "/api/ping", r => console.log(`🔔 ping → ${r.statusCode}`))
+     .on("error", e => console.error("ping:", e.message));
 }, 14 * 60 * 1000);
 
-/* ── Middleware ── */
+/* ═══════════════════════════════════════════
+   MIDDLEWARE
+═══════════════════════════════════════════ */
 app.use(cors());
 app.use(express.json());
 
-/* ────────────────────────────────────────────
+/* ═══════════════════════════════════════════
    TELEGRAM BOT
-──────────────────────────────────────────── */
-function isAdmin(userId) {
-  return ADMIN_TELEGRAM_ID > 0 && userId === ADMIN_TELEGRAM_ID;
-}
-
+═══════════════════════════════════════════ */
 async function startBot() {
   if (!BOT_TOKEN) { console.warn("⚠️ TELEGRAM_BOT_TOKEN not set"); return; }
   try {
     const { default: TelegramBot } = await import("node-telegram-bot-api");
     const bot = new TelegramBot(BOT_TOKEN, { polling: true });
-    console.log("🤖 Telegram bot started. Admin:", ADMIN_TELEGRAM_ID);
+    console.log("🤖 Bot started — Admin:", ADMIN_TG_ID);
 
-    bot.onText(/\/start/, async (msg) => {
-      if (!isAdmin(msg.from.id)) return bot.sendMessage(msg.chat.id, "⛔ أنت لست مدير هذا التطبيق.");
-      bot.sendMessage(msg.chat.id,
-        `👋 *مرحباً في لوحة التحكم!*\n\nالأوامر:\n\n` +
-        `✏️ \`/setdesc [الوصف]\` — تغيير وصف صفحة الدخول\n` +
-        `📝 \`/getdesc\` — عرض الوصف الحالي\n` +
-        `➕ \`/addnumber [الرقم]\` — إضافة رقم مسموح\n` +
-        `➖ \`/removenumber [الرقم]\` — حذف رقم\n` +
-        `📋 \`/listnumbers\` — عرض جميع الأرقام`,
-        { parse_mode: "Markdown" }
-      );
+    const isAdmin = id => ADMIN_TG_ID > 0 && id === ADMIN_TG_ID;
+    const menu = () => `\n\nالأوامر:\n✏️ /setdesc [النص]\n📝 /getdesc\n➕ /addnumber [+رقم]\n➖ /removenumber [+رقم]\n📋 /listnumbers`;
+
+    bot.onText(/\/start/, msg => {
+      if (!isAdmin(msg.from.id)) return bot.sendMessage(msg.chat.id, "⛔ غير مصرح.");
+      bot.sendMessage(msg.chat.id, `👋 *مرحباً في لوحة التحكم!*${menu()}`, { parse_mode: "Markdown" });
+    });
+
+    bot.onText(/\/getdesc/, msg => {
+      if (!isAdmin(msg.from.id)) return bot.sendMessage(msg.chat.id, "⛔ غير مصرح.");
+      const d = store.config.description;
+      bot.sendMessage(msg.chat.id, d ? `📋 *الوصف الحالي:*\n\n_${d}_` : "لم يُضبط وصف بعد.", { parse_mode: "Markdown" });
     });
 
     bot.onText(/\/setdesc (.+)/, async (msg, match) => {
-      if (!isAdmin(msg.from.id)) return bot.sendMessage(msg.chat.id, "⛔ غير مصرح لك.");
+      if (!isAdmin(msg.from.id)) return bot.sendMessage(msg.chat.id, "⛔ غير مصرح.");
       const desc = match[1].trim();
-      try {
-        await pool.query(
-          `INSERT INTO site_config(key,value,updated_at) VALUES('description',$1,NOW())
-           ON CONFLICT(key) DO UPDATE SET value=EXCLUDED.value, updated_at=NOW()`, [desc]
-        );
-        bot.sendMessage(msg.chat.id, `✅ *تم تحديث الوصف!*\n\n_"${desc}"_`, { parse_mode: "Markdown" });
-      } catch (e) { bot.sendMessage(msg.chat.id, `❌ ${e.message}`); }
-    });
-
-    bot.onText(/\/getdesc/, async (msg) => {
-      if (!isAdmin(msg.from.id)) return bot.sendMessage(msg.chat.id, "⛔ غير مصرح لك.");
-      try {
-        const { rows } = await pool.query("SELECT value FROM site_config WHERE key='description' LIMIT 1");
-        bot.sendMessage(msg.chat.id,
-          rows[0] ? `📋 *الوصف الحالي:*\n\n_${rows[0].value}_` : "لم يُضبط وصف بعد.",
-          { parse_mode: "Markdown" }
-        );
-      } catch (e) { bot.sendMessage(msg.chat.id, `❌ ${e.message}`); }
+      store.config.description = desc;
+      bot.sendMessage(msg.chat.id, `⏳ جارٍ الحفظ...`);
+      await ghUpdate("config.json", store.config);
+      bot.sendMessage(msg.chat.id, `✅ *تم تحديث الوصف!*\n\n_"${desc}"_`, { parse_mode: "Markdown" });
     });
 
     bot.onText(/\/addnumber (.+)/, async (msg, match) => {
-      if (!isAdmin(msg.from.id)) return bot.sendMessage(msg.chat.id, "⛔ غير مصرح لك.");
+      if (!isAdmin(msg.from.id)) return bot.sendMessage(msg.chat.id, "⛔ غير مصرح.");
       const phone = match[1].trim().replace(/\s+/g, "");
       if (!/^\+?[0-9]{7,15}$/.test(phone))
-        return bot.sendMessage(msg.chat.id, "⚠️ الصيغة غير صحيحة. مثال:\n`/addnumber +967777000000`", { parse_mode: "Markdown" });
-      try {
-        await pool.query("INSERT INTO allowed_numbers(phone) VALUES($1) ON CONFLICT(phone) DO NOTHING", [phone]);
-        bot.sendMessage(msg.chat.id, `✅ تمت إضافة: \`${phone}\``, { parse_mode: "Markdown" });
-      } catch (e) { bot.sendMessage(msg.chat.id, `❌ ${e.message}`); }
+        return bot.sendMessage(msg.chat.id, "⚠️ صيغة خاطئة. مثال:\n`/addnumber +967777000000`", { parse_mode: "Markdown" });
+      if (store.numbers.includes(phone))
+        return bot.sendMessage(msg.chat.id, `⚠️ الرقم \`${phone}\` موجود بالفعل.`, { parse_mode: "Markdown" });
+      store.numbers.push(phone);
+      bot.sendMessage(msg.chat.id, `⏳ جارٍ الحفظ...`);
+      await ghUpdate("allowed_numbers.json", store.numbers);
+      bot.sendMessage(msg.chat.id, `✅ تمت إضافة: \`${phone}\``, { parse_mode: "Markdown" });
     });
 
     bot.onText(/\/removenumber (.+)/, async (msg, match) => {
-      if (!isAdmin(msg.from.id)) return bot.sendMessage(msg.chat.id, "⛔ غير مصرح لك.");
+      if (!isAdmin(msg.from.id)) return bot.sendMessage(msg.chat.id, "⛔ غير مصرح.");
       const phone = match[1].trim().replace(/\s+/g, "");
-      try {
-        const { rowCount } = await pool.query("DELETE FROM allowed_numbers WHERE phone=$1", [phone]);
-        bot.sendMessage(msg.chat.id,
-          rowCount > 0 ? `✅ تم حذف: \`${phone}\`` : `⚠️ \`${phone}\` غير موجود.`,
-          { parse_mode: "Markdown" }
-        );
-      } catch (e) { bot.sendMessage(msg.chat.id, `❌ ${e.message}`); }
+      const before = store.numbers.length;
+      store.numbers = store.numbers.filter(n => n !== phone);
+      if (store.numbers.length === before)
+        return bot.sendMessage(msg.chat.id, `⚠️ الرقم \`${phone}\` غير موجود.`, { parse_mode: "Markdown" });
+      bot.sendMessage(msg.chat.id, `⏳ جارٍ الحفظ...`);
+      await ghUpdate("allowed_numbers.json", store.numbers);
+      bot.sendMessage(msg.chat.id, `✅ تم حذف: \`${phone}\``, { parse_mode: "Markdown" });
     });
 
-    bot.onText(/\/listnumbers/, async (msg) => {
-      if (!isAdmin(msg.from.id)) return bot.sendMessage(msg.chat.id, "⛔ غير مصرح لك.");
-      try {
-        const { rows } = await pool.query("SELECT phone FROM allowed_numbers ORDER BY added_at DESC");
-        if (!rows.length) return bot.sendMessage(msg.chat.id, "📋 لا توجد أرقام بعد.");
-        const list = rows.map((r, i) => `${i + 1}. \`${r.phone}\``).join("\n");
-        bot.sendMessage(msg.chat.id, `📋 *الأرقام (${rows.length}):*\n\n${list}`, { parse_mode: "Markdown" });
-      } catch (e) { bot.sendMessage(msg.chat.id, `❌ ${e.message}`); }
+    bot.onText(/\/listnumbers/, msg => {
+      if (!isAdmin(msg.from.id)) return bot.sendMessage(msg.chat.id, "⛔ غير مصرح.");
+      if (!store.numbers.length) return bot.sendMessage(msg.chat.id, "📋 لا توجد أرقام بعد.");
+      const list = store.numbers.map((n, i) => `${i + 1}. \`${n}\``).join("\n");
+      bot.sendMessage(msg.chat.id, `📋 *الأرقام المسموح بها (${store.numbers.length}):*\n\n${list}`, { parse_mode: "Markdown" });
     });
 
-    bot.on("polling_error", (err) => console.error("Telegram polling:", err.message));
-  } catch (err) {
-    console.error("❌ Bot start failed:", err.message);
+    bot.on("polling_error", e => console.error("Telegram polling:", e.message));
+  } catch (e) {
+    console.error("❌ Bot start failed:", e.message);
   }
 }
 
-/* ── API routes ── */
-app.get("/api/ping", (_req, res) => res.json({ ok: true, dbReady, dbError }));
+/* ═══════════════════════════════════════════
+   API ROUTES
+═══════════════════════════════════════════ */
+app.get("/api/ping", (_req, res) => res.json({ ok: true }));
 
 /* GET /api/config/description */
-app.get("/api/config/description", async (_req, res) => {
-  try {
-    const { rows } = await pool.query("SELECT value FROM site_config WHERE key='description' LIMIT 1");
-    return res.json({ description: rows[0]?.value ?? "" });
-  } catch (e) {
-    console.error("config/description:", e.message, e.code);
-    return res.status(500).json({ error: "خطأ في الخادم", detail: e.message, code: e.code });
-  }
+app.get("/api/config/description", (_req, res) => {
+  res.json({ description: store.config.description ?? "" });
 });
 
 /* POST /api/numbers/check */
-app.post("/api/numbers/check", async (req, res) => {
+app.post("/api/numbers/check", (req, res) => {
   const { phone } = req.body;
   if (!phone) return res.status(400).json({ allowed: false, error: "الرقم مطلوب" });
+  res.json({ allowed: store.numbers.includes(phone.trim()) });
+});
+
+/* POST /api/auth/register */
+app.post("/api/auth/register", async (req, res) => {
+  const { username, password, remember } = req.body;
+  if (!username || !password)
+    return res.status(400).json({ error: "اسم المستخدم وكلمة المرور مطلوبان" });
+  if (!/^[a-zA-Z][a-zA-Z0-9_]{3,19}$/.test(username))
+    return res.status(400).json({ error: "اسم المستخدم يجب أن يكون بين 4–20 حرف إنجليزي" });
+  if (password.length < 6)
+    return res.status(400).json({ error: "كلمة المرور يجب أن تكون 6 أحرف على الأقل" });
+
+  const lower = username.toLowerCase();
+  if (store.users.find(u => u.username === lower))
+    return res.status(409).json({ error: "اسم المستخدم مستخدم بالفعل" });
+
   try {
-    const { rows } = await pool.query("SELECT phone FROM allowed_numbers WHERE phone=$1 LIMIT 1", [phone.trim()]);
-    return res.json({ allowed: rows.length > 0 });
+    const passwordHash = await bcrypt.hash(password, 12);
+    const user = { id: crypto.randomUUID(), username: lower, passwordHash, createdAt: new Date().toISOString() };
+    store.users.push(user);
+    /* save to GitHub async — don't block response */
+    ghUpdate("users.json", store.users.map(u => ({ id: u.id, username: u.username, passwordHash: u.passwordHash, createdAt: u.createdAt })));
+    const token = jwt.sign({ id: user.id, username: lower, display: username }, JWT_SECRET, { expiresIn: remember ? "30d" : "1d" });
+    return res.status(201).json({ token, username: lower, display: username });
   } catch (e) {
-    console.error("numbers/check:", e.message, e.code);
-    return res.status(500).json({ allowed: false, error: "خطأ في الخادم", detail: e.message, code: e.code });
+    console.error("register:", e.message);
+    return res.status(500).json({ error: "خطأ في الخادم" });
   }
 });
 
-/* Auth */
-app.post("/api/auth/register", async (req, res) => {
-  const { username, password, remember } = req.body;
-  if (!username || !password) return res.status(400).json({ error: "اسم المستخدم وكلمة المرور مطلوبان" });
-  if (!/^[a-zA-Z][a-zA-Z0-9_]{3,19}$/.test(username)) return res.status(400).json({ error: "اسم المستخدم يجب أن يكون بين 4–20 حرف إنجليزي" });
-  if (password.length < 6) return res.status(400).json({ error: "كلمة المرور يجب أن تكون 6 أحرف على الأقل" });
-  try {
-    const { rows: ex } = await pool.query("SELECT id FROM users WHERE username=$1 LIMIT 1", [username.toLowerCase()]);
-    if (ex.length > 0) return res.status(409).json({ error: "اسم المستخدم مستخدم بالفعل" });
-    const hash = await bcrypt.hash(password, 12);
-    const { rows } = await pool.query("INSERT INTO users(username,password_hash) VALUES($1,$2) RETURNING id,username", [username.toLowerCase(), hash]);
-    const token = jwt.sign({ id: rows[0].id, username: rows[0].username, display: username }, JWT_SECRET, { expiresIn: remember ? "30d" : "1d" });
-    return res.status(201).json({ token, username: rows[0].username, display: username });
-  } catch (err) { console.error("register:", err.message); return res.status(500).json({ error: "خطأ في الخادم", detail: err.message }); }
-});
-
+/* POST /api/auth/login */
 app.post("/api/auth/login", async (req, res) => {
   const { username, password, remember } = req.body;
-  if (!username || !password) return res.status(400).json({ error: "اسم المستخدم وكلمة المرور مطلوبان" });
+  if (!username || !password)
+    return res.status(400).json({ error: "اسم المستخدم وكلمة المرور مطلوبان" });
+
+  const user = store.users.find(u => u.username === username.toLowerCase());
+  if (!user) return res.status(401).json({ error: "اسم المستخدم غير موجود" });
+
   try {
-    const { rows } = await pool.query("SELECT * FROM users WHERE username=$1 LIMIT 1", [username.toLowerCase()]);
-    if (!rows.length) return res.status(401).json({ error: "اسم المستخدم غير موجود" });
-    const valid = await bcrypt.compare(password, rows[0].password_hash);
+    const valid = await bcrypt.compare(password, user.passwordHash);
     if (!valid) return res.status(401).json({ error: "كلمة المرور غير صحيحة" });
-    const token = jwt.sign({ id: rows[0].id, username: rows[0].username, display: username }, JWT_SECRET, { expiresIn: remember ? "30d" : "1d" });
-    return res.json({ token, username: rows[0].username, display: username });
-  } catch (err) { console.error("login:", err.message); return res.status(500).json({ error: "خطأ في الخادم", detail: err.message }); }
+    const token = jwt.sign({ id: user.id, username: user.username, display: username }, JWT_SECRET, { expiresIn: remember ? "30d" : "1d" });
+    return res.json({ token, username: user.username, display: username });
+  } catch (e) {
+    console.error("login:", e.message);
+    return res.status(500).json({ error: "خطأ في الخادم" });
+  }
 });
 
 /* ── Static ── */
@@ -235,3 +228,9 @@ app.get("/login.html", (_req, res) => res.sendFile(join(__dirname, "../public/lo
 app.get("/app.html",   (_req, res) => res.sendFile(join(__dirname, "../public/app.html")));
 app.get("/",           (_req, res) => res.sendFile(join(__dirname, "../public/index.html")));
 app.get("*",           (_req, res) => res.sendFile(join(__dirname, "../public/index.html")));
+
+/* ── Start ── */
+app.listen(PORT, () => {
+  console.log(`🚀 Server on port ${PORT} — no DB needed!`);
+  startBot();
+});
