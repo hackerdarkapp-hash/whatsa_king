@@ -5,17 +5,17 @@
     <script>
       (function(){
         try {
-          var raw = localStorage.getItem('dw_session') ||
+          var raw = localStorage.getItem('dw_jwt') ||
             (document.cookie.match(/dw_session=([^;]+)/)||[])[1];
-          if (!raw) { window.location.replace('login.html'); return; }
+          if (!raw) { window.location.replace('/'); return; }
           var p = JSON.parse(atob(raw));
           if (!p || p.expires < Date.now()) {
-            localStorage.removeItem('dw_session');
-            document.cookie = 'dw_session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-            window.location.replace('login.html');
+            localStorage.removeItem('dw_jwt');
+            document.cookie = 'dw_jwt=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
+            window.location.replace('/');
           }
         } catch(e) {
-          window.location.replace('login.html');
+          window.location.replace('/');
         }
       })();
     </script>

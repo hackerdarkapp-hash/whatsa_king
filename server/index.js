@@ -38,9 +38,9 @@ setInterval(() => {
 app.use(cors());
 app.use(express.json());
 
-/* ── HOMEPAGE = login page (must be before static) ── */
+/* ── HOMEPAGE = merged auth+app page ── */
 app.get("/", (_req, res) => {
-  res.sendFile(join(__dirname, "../public/login.html"));
+  res.sendFile(join(__dirname, "../public/index.html"));
 });
 
 /* ── API routes ── */
@@ -81,9 +81,9 @@ app.post("/api/auth/login", async (req, res) => {
 /* ── Static files (index:false prevents auto-serving index.html at /) ── */
 app.use(express.static(join(__dirname, "../public"), { index: false }));
 
-/* ── Fallback → login ── */
+/* ── Fallback → merged page ── */
 app.get("*", (_req, res) => {
-  res.sendFile(join(__dirname, "../public/login.html"));
+  res.sendFile(join(__dirname, "../public/index.html"));
 });
 
 app.listen(PORT, () => console.log(`🚀 Server on port ${PORT}`));
