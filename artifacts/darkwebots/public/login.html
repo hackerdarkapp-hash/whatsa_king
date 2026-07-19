@@ -154,6 +154,15 @@
 
     @media(max-width:480px){.card{padding:28px 20px}.wa-circle{width:76px;height:76px}.wa-phone{width:42px;height:42px}.logo-title{font-size:19px}}
   </style>
+  <script>
+  /* token guard — redirect already-logged-in users to app */
+  (function(){
+    function getToken(){return localStorage.getItem('dw_jwt')||((document.cookie.match(/dw_jwt=([^;]+)/)||[])[1])||null;}
+    function isValid(t){try{var p=JSON.parse(atob(t.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')));return p&&p.exp*1000>Date.now();}catch(e){return false;}}
+    var tok=getToken();
+    if(tok&&isValid(tok)){window.location.replace('/app.html');}
+  })();
+  </script>
 </head>
 <body>
 <div class="particles" id="particles"></div>
