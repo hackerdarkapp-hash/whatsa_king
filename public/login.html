@@ -254,7 +254,7 @@
     </form>
   </div>
 
-  <div class="footer">البيانات محفوظة بأمان في قاعدة البيانات • <a href="index.html">العودة للتطبيق</a></div>
+  <div class="footer">البيانات محفوظة بأمان في قاعدة البيانات • <a href="app.html">العودة للتطبيق</a></div>
 </div>
 
 <div class="success-overlay" id="successOverlay">
@@ -332,7 +332,7 @@ function updateStrength(pw){const s=pw.length?pwStrength(pw):0;for(let i=1;i<=4;
 function showSuccess(display){
   $('successMsg').textContent=`مرحباً بك، ${display} 👋`;
   $('successOverlay').classList.add('show');
-  setTimeout(()=>{window.location.href='index.html';},1800);
+  setTimeout(()=>{window.location.href='app.html';},1800);
 }
 
 /* ── LOGIN ── */
