@@ -6,313 +6,118 @@
   <title>DARKWEBOTS — تسجيل الدخول</title>
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap');
-
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
-      --bg:        #0a0a0f;
-      --surface:   #111118;
-      --card:      #16161f;
-      --border:    #2a2a3a;
-      --accent:    #7c3aed;
-      --accent2:   #a855f7;
-      --green:     #22c55e;
-      --red:       #ef4444;
-      --text:      #e2e8f0;
-      --muted:     #64748b;
-      --glow:      0 0 30px rgba(124,58,237,.35);
+      --bg:#0a0a0f; --surface:#111118; --card:#16161f; --border:#2a2a3a;
+      --accent:#7c3aed; --accent2:#a855f7; --green:#22c55e; --red:#ef4444;
+      --text:#e2e8f0; --muted:#64748b; --glow:0 0 30px rgba(124,58,237,.35);
     }
-
-    html, body {
-      height: 100%;
-      font-family: 'Cairo', sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      overflow-x: hidden;
-    }
-
-    /* ── animated background ── */
+    html,body { height:100%; font-family:'Cairo',sans-serif; background:var(--bg); color:var(--text); overflow-x:hidden; }
     body::before {
-      content: '';
-      position: fixed; inset: 0; z-index: 0;
+      content:''; position:fixed; inset:0; z-index:0; pointer-events:none;
       background:
-        radial-gradient(ellipse 80% 60% at 20% 10%, rgba(124,58,237,.18) 0%, transparent 60%),
-        radial-gradient(ellipse 60% 80% at 80% 90%, rgba(168,85,247,.12) 0%, transparent 60%);
-      pointer-events: none;
+        radial-gradient(ellipse 80% 60% at 20% 10%,rgba(124,58,237,.18) 0%,transparent 60%),
+        radial-gradient(ellipse 60% 80% at 80% 90%,rgba(168,85,247,.12) 0%,transparent 60%);
     }
-
-    .particles {
-      position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none;
-    }
+    .particles { position:fixed; inset:0; z-index:0; overflow:hidden; pointer-events:none; }
     .particle {
-      position: absolute;
-      width: 2px; height: 2px;
-      background: var(--accent2);
-      border-radius: 50%;
-      opacity: 0;
-      animation: float var(--dur) linear infinite;
-      animation-delay: var(--delay);
+      position:absolute; width:2px; height:2px; background:var(--accent2);
+      border-radius:50%; opacity:0; animation:float var(--dur) linear infinite; animation-delay:var(--delay);
     }
     @keyframes float {
-      0%   { transform: translateY(100vh) translateX(0); opacity: 0; }
-      10%  { opacity: .6; }
-      90%  { opacity: .3; }
-      100% { transform: translateY(-10vh) translateX(var(--dx)); opacity: 0; }
+      0%   { transform:translateY(100vh) translateX(0); opacity:0; }
+      10%  { opacity:.6; }
+      90%  { opacity:.3; }
+      100% { transform:translateY(-10vh) translateX(var(--dx)); opacity:0; }
     }
-
-    /* ── layout ── */
-    .page {
-      position: relative; z-index: 1;
-      min-height: 100vh;
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      padding: 24px 16px;
-    }
-
-    /* ── logo ── */
-    .logo {
-      text-align: center;
-      margin-bottom: 28px;
-      user-select: none;
-    }
-    .logo-icon {
-      font-size: 48px;
-      line-height: 1;
-      filter: drop-shadow(0 0 16px var(--accent));
-    }
-    .logo-text {
-      font-size: 22px;
-      font-weight: 900;
-      letter-spacing: 4px;
-      background: linear-gradient(135deg, #a855f7, #7c3aed);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-    .logo-sub { font-size: 12px; color: var(--muted); letter-spacing: 2px; margin-top: 2px; }
-
-    /* ── card ── */
+    .page { position:relative; z-index:1; min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:24px 16px; }
+    .logo { text-align:center; margin-bottom:28px; user-select:none; }
+    .logo-icon { font-size:48px; line-height:1; filter:drop-shadow(0 0 16px var(--accent)); }
+    .logo-text { font-size:22px; font-weight:900; letter-spacing:4px; background:linear-gradient(135deg,#a855f7,#7c3aed); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .logo-sub { font-size:12px; color:var(--muted); letter-spacing:2px; margin-top:2px; }
     .card {
-      width: 100%; max-width: 420px;
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 36px 32px;
-      box-shadow: var(--glow), 0 24px 64px rgba(0,0,0,.5);
-      position: relative;
-      overflow: hidden;
+      width:100%; max-width:420px; background:var(--card); border:1px solid var(--border);
+      border-radius:20px; padding:36px 32px;
+      box-shadow:var(--glow),0 24px 64px rgba(0,0,0,.5); position:relative; overflow:hidden;
     }
-    .card::before {
-      content: '';
-      position: absolute; top: 0; left: 0; right: 0;
-      height: 2px;
-      background: linear-gradient(90deg, transparent, var(--accent), var(--accent2), transparent);
-    }
-
-    /* ── tabs ── */
-    .tabs {
-      display: flex; gap: 8px;
-      background: var(--surface);
-      border-radius: 12px;
-      padding: 4px;
-      margin-bottom: 28px;
-    }
-    .tab-btn {
-      flex: 1; padding: 10px;
-      border: none; border-radius: 9px;
-      background: transparent; color: var(--muted);
-      font-family: 'Cairo', sans-serif;
-      font-size: 14px; font-weight: 700;
-      cursor: pointer;
-      transition: all .25s;
-    }
-    .tab-btn.active {
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      color: #fff;
-      box-shadow: 0 4px 16px rgba(124,58,237,.4);
-    }
-
-    /* ── form ── */
-    .form { display: none; flex-direction: column; gap: 18px; }
-    .form.active { display: flex; }
-
-    .field { display: flex; flex-direction: column; gap: 6px; }
-    .field label {
-      font-size: 13px; font-weight: 600; color: var(--muted);
-      letter-spacing: .5px;
-    }
-    .input-wrap {
-      position: relative;
-      display: flex; align-items: center;
-    }
-    .input-wrap .icon {
-      position: absolute; right: 14px;
-      font-size: 16px; color: var(--muted);
-      pointer-events: none;
-    }
+    .card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; background:linear-gradient(90deg,transparent,var(--accent),var(--accent2),transparent); }
+    .tabs { display:flex; gap:8px; background:var(--surface); border-radius:12px; padding:4px; margin-bottom:28px; }
+    .tab-btn { flex:1; padding:10px; border:none; border-radius:9px; background:transparent; color:var(--muted); font-family:'Cairo',sans-serif; font-size:14px; font-weight:700; cursor:pointer; transition:all .25s; }
+    .tab-btn.active { background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#fff; box-shadow:0 4px 16px rgba(124,58,237,.4); }
+    .form { display:none; flex-direction:column; gap:18px; }
+    .form.active { display:flex; }
+    .field { display:flex; flex-direction:column; gap:6px; }
+    .field label { font-size:13px; font-weight:600; color:var(--muted); letter-spacing:.5px; }
+    .input-wrap { position:relative; display:flex; align-items:center; }
+    .input-wrap .icon { position:absolute; right:14px; font-size:16px; color:var(--muted); pointer-events:none; }
     .input-wrap input {
-      width: 100%;
-      padding: 13px 44px 13px 44px;
-      background: var(--surface);
-      border: 1.5px solid var(--border);
-      border-radius: 12px;
-      color: var(--text);
-      font-family: 'Cairo', sans-serif;
-      font-size: 14px;
-      outline: none;
-      transition: border-color .2s, box-shadow .2s;
-      direction: ltr; text-align: left;
+      width:100%; padding:13px 44px 13px 44px; background:var(--surface);
+      border:1.5px solid var(--border); border-radius:12px; color:var(--text);
+      font-family:'Cairo',sans-serif; font-size:14px; outline:none;
+      transition:border-color .2s,box-shadow .2s; direction:ltr; text-align:left;
     }
-    .input-wrap input::placeholder { color: var(--muted); font-size: 13px; }
-    .input-wrap input:focus {
-      border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(124,58,237,.2);
-    }
-    .input-wrap input.error { border-color: var(--red); }
-    .input-wrap input.success { border-color: var(--green); }
-
-    /* toggle password visibility */
-    .toggle-pw {
-      position: absolute; left: 12px;
-      background: none; border: none;
-      color: var(--muted); cursor: pointer;
-      font-size: 16px; padding: 4px;
-      transition: color .2s;
-    }
-    .toggle-pw:hover { color: var(--text); }
-
-    /* strength bar */
-    .strength-bar {
-      display: flex; gap: 4px; margin-top: 4px;
-    }
-    .strength-seg {
-      flex: 1; height: 3px; border-radius: 99px;
-      background: var(--border);
-      transition: background .3s;
-    }
-    .strength-label { font-size: 11px; color: var(--muted); margin-top: 4px; }
-
-    .field-error {
-      font-size: 12px; color: var(--red);
-      min-height: 16px;
-      transition: opacity .2s;
-    }
-
-    /* remember me */
-    .remember {
-      display: flex; align-items: center; gap: 8px;
-      font-size: 13px; color: var(--muted);
-      cursor: pointer;
-    }
-    .remember input[type=checkbox] {
-      accent-color: var(--accent);
-      width: 16px; height: 16px; cursor: pointer;
-    }
-    .remember span { user-select: none; }
-
-    /* submit btn */
+    .input-wrap input::placeholder { color:var(--muted); font-size:13px; }
+    .input-wrap input:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(124,58,237,.2); }
+    .input-wrap input.error   { border-color:var(--red); }
+    .input-wrap input.success { border-color:var(--green); }
+    .toggle-pw { position:absolute; left:12px; background:none; border:none; color:var(--muted); cursor:pointer; font-size:16px; padding:4px; transition:color .2s; }
+    .toggle-pw:hover { color:var(--text); }
+    .strength-bar { display:flex; gap:4px; margin-top:4px; }
+    .strength-seg { flex:1; height:3px; border-radius:99px; background:var(--border); transition:background .3s; }
+    .strength-label { font-size:11px; color:var(--muted); margin-top:4px; }
+    .field-error { font-size:12px; color:var(--red); min-height:16px; }
+    .remember { display:flex; align-items:center; gap:8px; font-size:13px; color:var(--muted); cursor:pointer; }
+    .remember input[type=checkbox] { accent-color:var(--accent); width:16px; height:16px; cursor:pointer; }
     .btn-submit {
-      width: 100%; padding: 14px;
-      border: none; border-radius: 12px;
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      color: #fff;
-      font-family: 'Cairo', sans-serif;
-      font-size: 16px; font-weight: 700;
-      cursor: pointer;
-      letter-spacing: .5px;
-      box-shadow: 0 4px 20px rgba(124,58,237,.45);
-      transition: transform .15s, box-shadow .15s, opacity .15s;
-      position: relative; overflow: hidden;
+      width:100%; padding:14px; border:none; border-radius:12px;
+      background:linear-gradient(135deg,var(--accent),var(--accent2)); color:#fff;
+      font-family:'Cairo',sans-serif; font-size:16px; font-weight:700; cursor:pointer;
+      letter-spacing:.5px; box-shadow:0 4px 20px rgba(124,58,237,.45);
+      transition:transform .15s,box-shadow .15s,opacity .15s; position:relative; overflow:hidden;
     }
-    .btn-submit:hover   { transform: translateY(-1px); box-shadow: 0 6px 28px rgba(124,58,237,.6); }
-    .btn-submit:active  { transform: translateY(0); }
-    .btn-submit:disabled { opacity: .6; cursor: not-allowed; transform: none; }
-
-    /* ripple */
-    .ripple {
-      position: absolute;
-      border-radius: 50%;
-      background: rgba(255,255,255,.25);
-      transform: scale(0);
-      animation: ripple .5s linear;
-      pointer-events: none;
-    }
-    @keyframes ripple {
-      to { transform: scale(4); opacity: 0; }
-    }
-
-    /* global alert */
-    .alert {
-      padding: 12px 16px;
-      border-radius: 10px;
-      font-size: 13px; font-weight: 600;
-      display: none; align-items: center; gap: 8px;
-    }
-    .alert.error   { display: flex; background: rgba(239,68,68,.12); border: 1px solid rgba(239,68,68,.3); color: #fca5a5; }
-    .alert.success { display: flex; background: rgba(34,197,94,.12);  border: 1px solid rgba(34,197,94,.3);  color: #86efac; }
-
-    /* footer */
-    .footer {
-      margin-top: 20px;
-      text-align: center;
-      font-size: 12px;
-      color: var(--muted);
-    }
-    .footer a { color: var(--accent2); text-decoration: none; }
-    .footer a:hover { text-decoration: underline; }
-
-    /* success overlay */
+    .btn-submit:hover   { transform:translateY(-1px); box-shadow:0 6px 28px rgba(124,58,237,.6); }
+    .btn-submit:active  { transform:translateY(0); }
+    .btn-submit:disabled { opacity:.6; cursor:not-allowed; transform:none; }
+    .spinner { display:inline-block; width:18px; height:18px; border:2px solid rgba(255,255,255,.3); border-top-color:#fff; border-radius:50%; animation:spin .7s linear infinite; vertical-align:middle; margin-left:8px; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    .ripple { position:absolute; border-radius:50%; background:rgba(255,255,255,.25); transform:scale(0); animation:ripple .5s linear; pointer-events:none; }
+    @keyframes ripple { to { transform:scale(4); opacity:0; } }
+    .alert { padding:12px 16px; border-radius:10px; font-size:13px; font-weight:600; display:none; align-items:center; gap:8px; }
+    .alert.error   { display:flex; background:rgba(239,68,68,.12); border:1px solid rgba(239,68,68,.3); color:#fca5a5; }
+    .alert.success { display:flex; background:rgba(34,197,94,.12);  border:1px solid rgba(34,197,94,.3);  color:#86efac; }
+    .footer { margin-top:20px; text-align:center; font-size:12px; color:var(--muted); }
+    .footer a { color:var(--accent2); text-decoration:none; }
     .success-overlay {
-      display: none; position: fixed; inset: 0; z-index: 999;
-      background: rgba(0,0,0,.85);
-      align-items: center; justify-content: center;
-      flex-direction: column; gap: 16px;
-      animation: fadeIn .3s;
+      display:none; position:fixed; inset:0; z-index:999;
+      background:rgba(0,0,0,.85); align-items:center; justify-content:center;
+      flex-direction:column; gap:16px; animation:fadeIn .3s;
     }
-    .success-overlay.show { display: flex; }
-    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-    .success-icon {
-      font-size: 72px;
-      animation: popIn .4s cubic-bezier(.34,1.56,.64,1);
-    }
-    @keyframes popIn { from { transform: scale(0); } to { transform: scale(1); } }
-    .success-msg { font-size: 20px; font-weight: 700; color: var(--green); }
-    .success-sub { font-size: 14px; color: var(--muted); }
-
-    /* responsive */
-    @media (max-width: 480px) {
-      .card { padding: 28px 20px; }
-      .logo-icon { font-size: 40px; }
-    }
+    .success-overlay.show { display:flex; }
+    @keyframes fadeIn { from{opacity:0}to{opacity:1} }
+    .success-icon { font-size:72px; animation:popIn .4s cubic-bezier(.34,1.56,.64,1); }
+    @keyframes popIn { from{transform:scale(0)}to{transform:scale(1)} }
+    .success-msg { font-size:20px; font-weight:700; color:var(--green); }
+    .success-sub { font-size:14px; color:var(--muted); }
+    @media(max-width:480px) { .card{padding:28px 20px;} .logo-icon{font-size:40px;} }
   </style>
 </head>
 <body>
-
-<!-- particles -->
 <div class="particles" id="particles"></div>
-
-<!-- main -->
 <div class="page">
-
   <div class="logo">
     <div class="logo-icon">🌑</div>
     <div class="logo-text">DARKWEBOTS</div>
     <div class="logo-sub">SECURE ACCESS PORTAL</div>
   </div>
-
   <div class="card">
     <div id="globalAlert" class="alert"></div>
-
-    <!-- tabs -->
     <div class="tabs">
       <button class="tab-btn active" onclick="switchTab('login')">تسجيل الدخول</button>
       <button class="tab-btn"        onclick="switchTab('register')">إنشاء حساب</button>
     </div>
 
-    <!-- LOGIN FORM -->
+    <!-- LOGIN -->
     <form class="form active" id="loginForm" novalidate>
-
-      <!-- username -->
       <div class="field">
         <label for="l_user">اسم المستخدم</label>
         <div class="input-wrap">
@@ -321,8 +126,6 @@
         </div>
         <span class="field-error" id="l_user_err"></span>
       </div>
-
-      <!-- password -->
       <div class="field">
         <label for="l_pass">كلمة المرور</label>
         <div class="input-wrap">
@@ -332,20 +135,15 @@
         </div>
         <span class="field-error" id="l_pass_err"></span>
       </div>
-
-      <!-- remember me -->
       <label class="remember">
         <input type="checkbox" id="l_remember" />
         <span>تذكرني لمدة 30 يوم</span>
       </label>
-
       <button class="btn-submit" type="submit">دخول</button>
     </form>
 
-    <!-- REGISTER FORM -->
+    <!-- REGISTER -->
     <form class="form" id="registerForm" novalidate>
-
-      <!-- username -->
       <div class="field">
         <label for="r_user">اسم المستخدم</label>
         <div class="input-wrap">
@@ -354,8 +152,6 @@
         </div>
         <span class="field-error" id="r_user_err"></span>
       </div>
-
-      <!-- password -->
       <div class="field">
         <label for="r_pass">كلمة المرور</label>
         <div class="input-wrap">
@@ -365,16 +161,12 @@
           <button type="button" class="toggle-pw" onclick="togglePw('r_pass',this)">👁</button>
         </div>
         <div class="strength-bar" id="strengthBar">
-          <div class="strength-seg" id="s1"></div>
-          <div class="strength-seg" id="s2"></div>
-          <div class="strength-seg" id="s3"></div>
-          <div class="strength-seg" id="s4"></div>
+          <div class="strength-seg" id="s1"></div><div class="strength-seg" id="s2"></div>
+          <div class="strength-seg" id="s3"></div><div class="strength-seg" id="s4"></div>
         </div>
         <div class="strength-label" id="strengthLabel"></div>
         <span class="field-error" id="r_pass_err"></span>
       </div>
-
-      <!-- confirm password -->
       <div class="field">
         <label for="r_confirm">تأكيد كلمة المرور</label>
         <div class="input-wrap">
@@ -384,25 +176,18 @@
         </div>
         <span class="field-error" id="r_confirm_err"></span>
       </div>
-
-      <!-- remember me -->
       <label class="remember">
         <input type="checkbox" id="r_remember" />
         <span>تذكرني لمدة 30 يوم</span>
       </label>
-
       <button class="btn-submit" type="submit">إنشاء الحساب</button>
     </form>
   </div>
-
   <div class="footer">
-    جميع البيانات محفوظة محلياً على جهازك •
-    <a href="app.html">العودة للتطبيق</a>
+    البيانات محفوظة بأمان في قاعدة البيانات •
+    <a href="index.html">العودة للتطبيق</a>
   </div>
-
 </div>
-
-<!-- success overlay -->
 <div class="success-overlay" id="successOverlay">
   <div class="success-icon">✅</div>
   <div class="success-msg" id="successMsg"></div>
@@ -410,320 +195,157 @@
 </div>
 
 <script>
-/* ──────────────────────────────
-   PARTICLES
-────────────────────────────── */
+/* ── Particles ── */
 (function(){
-  const container = document.getElementById('particles');
+  const c=document.getElementById('particles');
   for(let i=0;i<40;i++){
-    const p = document.createElement('div');
-    p.className = 'particle';
-    p.style.cssText = `
-      left:${Math.random()*100}%;
-      --dur:${6+Math.random()*10}s;
-      --delay:${Math.random()*10}s;
-      --dx:${(Math.random()-0.5)*200}px;
-      width:${1+Math.random()*3}px;
-      height:${1+Math.random()*3}px;
-    `;
-    container.appendChild(p);
+    const p=document.createElement('div'); p.className='particle';
+    p.style.cssText=`left:${Math.random()*100}%;--dur:${6+Math.random()*10}s;--delay:${Math.random()*10}s;--dx:${(Math.random()-.5)*200}px;width:${1+Math.random()*3}px;height:${1+Math.random()*3}px;`;
+    c.appendChild(p);
   }
 })();
 
-/* ──────────────────────────────
-   HELPERS
-────────────────────────────── */
-const $ = id => document.getElementById(id);
+const $=id=>document.getElementById(id);
 
-function setErr(id, msg){
-  const el = $(id);
-  if(!el) return;
-  el.textContent = msg;
+/* ── API Base (same origin) ── */
+const API = '/api/auth';
+
+/* ── Token helpers ── */
+function saveToken(token, remember) {
+  localStorage.setItem('dw_jwt', token);
+  if (remember) {
+    const d = new Date(Date.now() + 30*24*60*60*1000).toUTCString();
+    document.cookie = `dw_jwt=${token}; expires=${d}; path=/; SameSite=Lax`;
+  }
 }
+function getToken() {
+  return localStorage.getItem('dw_jwt') ||
+    (document.cookie.match(/dw_jwt=([^;]+)/) || [])[1] || null;
+}
+function decodeJwt(token) {
+  try { return JSON.parse(atob(token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/'))); }
+  catch { return null; }
+}
+function isTokenValid(token) {
+  const p = decodeJwt(token);
+  return p && p.exp * 1000 > Date.now();
+}
+
+/* ── Auto redirect ── */
+(function(){
+  const t = getToken();
+  if (t && isTokenValid(t)) {
+    const p = decodeJwt(t);
+    showSuccess(p.display || p.username);
+  }
+})();
+
+/* ── UI helpers ── */
+function setErr(id,msg){ const e=$(id); if(e) e.textContent=msg; }
 function clearErr(id){ setErr(id,''); }
+function setInputState(inp,state){ inp.classList.remove('error','success'); if(state) inp.classList.add(state); }
+function showAlert(msg,type){ const e=$('globalAlert'); e.className='alert '+type; e.innerHTML=(type==='error'?'❌ ':'✅ ')+msg; }
+function hideAlert(){ const e=$('globalAlert'); e.className='alert'; e.textContent=''; }
+function setLoading(btn,on){ if(on){ btn.disabled=true; btn.dataset.orig=btn.textContent; btn.innerHTML=btn.dataset.orig+'<span class="spinner"></span>'; } else { btn.disabled=false; btn.innerHTML=btn.dataset.orig||btn.innerHTML; } }
 
-function setInputState(input, state){
-  input.classList.remove('error','success');
-  if(state) input.classList.add(state);
-}
+function togglePw(id,btn){ const i=$(id); if(i.type==='password'){i.type='text';btn.textContent='🙈';}else{i.type='password';btn.textContent='👁';} }
 
-function showAlert(msg, type){
-  const el = $('globalAlert');
-  el.className = 'alert ' + type;
-  el.innerHTML = (type==='error'?'❌ ':'✅ ') + msg;
-  el.scrollIntoView({behavior:'smooth', block:'nearest'});
-}
-function hideAlert(){
-  const el = $('globalAlert');
-  el.className = 'alert';
-  el.textContent = '';
-}
-
-function togglePw(id, btn){
-  const inp = $(id);
-  if(inp.type==='password'){ inp.type='text';  btn.textContent='🙈'; }
-  else                      { inp.type='password'; btn.textContent='👁'; }
-}
-
-/* ripple effect */
 document.querySelectorAll('.btn-submit').forEach(btn=>{
-  btn.addEventListener('click', e=>{
-    const r = document.createElement('span');
-    r.className = 'ripple';
-    const rect = btn.getBoundingClientRect();
-    const size = Math.max(rect.width, rect.height);
-    r.style.cssText = `width:${size}px;height:${size}px;left:${e.clientX-rect.left-size/2}px;top:${e.clientY-rect.top-size/2}px`;
-    btn.appendChild(r);
-    setTimeout(()=>r.remove(), 600);
-  });
+  btn.addEventListener('click',e=>{ const r=document.createElement('span'); r.className='ripple'; const rect=btn.getBoundingClientRect(),size=Math.max(rect.width,rect.height); r.style.cssText=`width:${size}px;height:${size}px;left:${e.clientX-rect.left-size/2}px;top:${e.clientY-rect.top-size/2}px`; btn.appendChild(r); setTimeout(()=>r.remove(),600); });
 });
 
-/* ──────────────────────────────
-   TABS
-────────────────────────────── */
 function switchTab(tab){
   hideAlert();
-  document.querySelectorAll('.tab-btn').forEach((b,i)=>{
-    b.classList.toggle('active', (tab==='login'?i===0:i===1));
-  });
-  $('loginForm').classList.toggle('active', tab==='login');
-  $('registerForm').classList.toggle('active', tab==='register');
+  document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',tab==='login'?i===0:i===1));
+  $('loginForm').classList.toggle('active',tab==='login');
+  $('registerForm').classList.toggle('active',tab==='register');
 }
 
-/* ──────────────────────────────
-   PASSWORD STRENGTH
-────────────────────────────── */
-function passwordStrength(pw){
-  let score = 0;
-  if(pw.length >= 6)  score++;
-  if(pw.length >= 10) score++;
-  if(/[A-Z]/.test(pw) && /[a-z]/.test(pw)) score++;
-  if(/[0-9]/.test(pw)) score++;
-  if(/[^A-Za-z0-9]/.test(pw)) score++;
-  return Math.min(4, score);
-}
+/* ── Password strength ── */
+const SC=['','#ef4444','#f97316','#eab308','#22c55e'];
+const SL=['','ضعيفة 🔴','متوسطة 🟠','جيدة 🟡','قوية 🟢'];
+function passwordStrength(pw){ let s=0; if(pw.length>=6)s++; if(pw.length>=10)s++; if(/[A-Z]/.test(pw)&&/[a-z]/.test(pw))s++; if(/[0-9]/.test(pw))s++; if(/[^A-Za-z0-9]/.test(pw))s++; return Math.min(4,s); }
+function updateStrength(pw){ const s=pw.length?passwordStrength(pw):0; for(let i=1;i<=4;i++) $('s'+i).style.background=i<=s?SC[s]:'var(--border)'; $('strengthLabel').textContent=pw.length?SL[s]||'':''; $('strengthLabel').style.color=SC[s]||'var(--muted)'; }
 
-const strengthColors = ['','#ef4444','#f97316','#eab308','#22c55e'];
-const strengthLabels = ['','ضعيفة 🔴','متوسطة 🟠','جيدة 🟡','قوية 🟢'];
-
-function updateStrength(pw){
-  const score = pw.length ? passwordStrength(pw) : 0;
-  for(let i=1;i<=4;i++){
-    $('s'+i).style.background = i<=score ? strengthColors[score] : 'var(--border)';
-  }
-  $('strengthLabel').textContent = pw.length ? strengthLabels[score]||'' : '';
-  $('strengthLabel').style.color = strengthColors[score]||'var(--muted)';
-}
-
-/* ──────────────────────────────
-   STORAGE HELPERS (localStorage + cookie)
-────────────────────────────── */
-function hashSimple(str){
-  /* NOT cryptographic — demo only */
-  let h = 0;
-  for(let i=0;i<str.length;i++) h = (Math.imul(31,h)+str.charCodeAt(i))|0;
-  return h.toString(36);
-}
-
-function saveSession(username, remember){
-  const payload = {
-    username,
-    ts: Date.now(),
-    expires: remember ? Date.now() + 30*24*60*60*1000 : Date.now() + 24*60*60*1000
-  };
-  const token = btoa(JSON.stringify(payload));
-  localStorage.setItem('dw_session', token);
-  if(remember){
-    const d = new Date(payload.expires).toUTCString();
-    document.cookie = `dw_session=${token}; expires=${d}; path=/; SameSite=Lax`;
-  }
-}
-
-function getSession(){
-  try{
-    const raw = localStorage.getItem('dw_session') ||
-      (document.cookie.match(/dw_session=([^;]+)/)||[])[1];
-    if(!raw) return null;
-    const p = JSON.parse(atob(raw));
-    if(p.expires < Date.now()){ clearSession(); return null; }
-    return p;
-  }catch{ return null; }
-}
-
-function clearSession(){
-  localStorage.removeItem('dw_session');
-  document.cookie = 'dw_session=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-}
-
-function getUsers(){
-  try{ return JSON.parse(localStorage.getItem('dw_users')||'{}'); }catch{ return {}; }
-}
-function saveUsers(u){ localStorage.setItem('dw_users', JSON.stringify(u)); }
-
-/* ──────────────────────────────
-   AUTO REDIRECT IF LOGGED IN
-────────────────────────────── */
-(function(){
-  const s = getSession();
-  if(s) redirect(s.username);
-})();
-
-function redirect(username){
-  $('successMsg').textContent = `مرحباً بك، ${username} 👋`;
+function showSuccess(display){
+  $('successMsg').textContent=`مرحباً بك، ${display} 👋`;
   $('successOverlay').classList.add('show');
-  setTimeout(()=>{ window.location.href = 'app.html'; }, 1800);
+  setTimeout(()=>{ window.location.href='index.html'; },1800);
 }
 
-/* ──────────────────────────────
-   SUCCESS ANIMATION helper
-────────────────────────────── */
-function showSuccess(username){
-  $('successMsg').textContent = `مرحباً بك، ${username} 👋`;
-  $('successOverlay').classList.add('show');
-  setTimeout(()=>{ window.location.href = 'app.html'; }, 2000);
-}
+/* ── LOGIN ── */
+$('loginForm').addEventListener('submit', async function(e){
+  e.preventDefault(); hideAlert();
+  const username=$('l_user').value.trim();
+  const password=$('l_pass').value;
+  const remember=$('l_remember').checked;
+  let valid=true;
 
-/* ──────────────────────────────
-   LOGIN
-────────────────────────────── */
-$('loginForm').addEventListener('submit', function(e){
-  e.preventDefault();
-  hideAlert();
-  let valid = true;
-
-  const username = $('l_user').value.trim();
-  const password = $('l_pass').value;
-  const remember = $('l_remember').checked;
-
-  /* validate username */
-  if(!username){
-    setErr('l_user_err','⚠ اسم المستخدم مطلوب');
-    setInputState($('l_user'),'error');
-    valid = false;
-  } else {
-    clearErr('l_user_err');
-    setInputState($('l_user'),'success');
-  }
-
-  /* validate password */
-  if(!password){
-    setErr('l_pass_err','⚠ كلمة المرور مطلوبة');
-    setInputState($('l_pass'),'error');
-    valid = false;
-  } else {
-    clearErr('l_pass_err');
-    setInputState($('l_pass'),'success');
-  }
-
+  if(!username){ setErr('l_user_err','⚠ اسم المستخدم مطلوب'); setInputState($('l_user'),'error'); valid=false; }
+  else { clearErr('l_user_err'); setInputState($('l_user'),'success'); }
+  if(!password){ setErr('l_pass_err','⚠ كلمة المرور مطلوبة'); setInputState($('l_pass'),'error'); valid=false; }
+  else { clearErr('l_pass_err'); setInputState($('l_pass'),'success'); }
   if(!valid) return;
 
-  /* check credentials */
-  const users = getUsers();
-  if(!users[username.toLowerCase()]){
-    showAlert('اسم المستخدم غير موجود. قم بإنشاء حساب أولاً.','error');
-    setInputState($('l_user'),'error');
-    return;
+  const btn=this.querySelector('.btn-submit');
+  setLoading(btn,true);
+  try {
+    const res = await fetch(`${API}/login`,{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({username, password, remember})
+    });
+    const data = await res.json();
+    if(!res.ok){ showAlert(data.error||'خطأ غير معروف','error'); setLoading(btn,false); return; }
+    saveToken(data.token, remember);
+    showSuccess(data.display || data.username);
+  } catch(err) {
+    showAlert('تعذّر الاتصال بالخادم، تحقق من اتصالك','error');
+    setLoading(btn,false);
   }
-  if(users[username.toLowerCase()].hash !== hashSimple(password)){
-    showAlert('كلمة المرور غير صحيحة.','error');
-    setInputState($('l_pass'),'error');
-    return;
-  }
-
-  /* success */
-  saveSession(users[username.toLowerCase()].display, remember);
-  this.querySelector('.btn-submit').disabled = true;
-  showSuccess(users[username.toLowerCase()].display);
 });
 
-/* ──────────────────────────────
-   REGISTER
-────────────────────────────── */
-$('registerForm').addEventListener('submit', function(e){
-  e.preventDefault();
-  hideAlert();
-  let valid = true;
+/* ── REGISTER ── */
+$('registerForm').addEventListener('submit', async function(e){
+  e.preventDefault(); hideAlert();
+  const username=$('r_user').value.trim();
+  const password=$('r_pass').value;
+  const confirm=$('r_confirm').value;
+  const remember=$('r_remember').checked;
+  let valid=true;
 
-  const username = $('r_user').value.trim();
-  const password = $('r_pass').value;
-  const confirm  = $('r_confirm').value;
-  const remember = $('r_remember').checked;
+  if(!username){ setErr('r_user_err','⚠ اسم المستخدم مطلوب'); setInputState($('r_user'),'error'); valid=false; }
+  else if(!/^[a-zA-Z][a-zA-Z0-9_]{3,19}$/.test(username)){ setErr('r_user_err','⚠ 4–20 حرف إنجليزي (حروف/أرقام/_)'); setInputState($('r_user'),'error'); valid=false; }
+  else { clearErr('r_user_err'); setInputState($('r_user'),'success'); }
 
-  /* username validation */
-  if(!username){
-    setErr('r_user_err','⚠ اسم المستخدم مطلوب');
-    setInputState($('r_user'),'error');
-    valid = false;
-  } else if(!/^[a-zA-Z][a-zA-Z0-9_]{3,19}$/.test(username)){
-    setErr('r_user_err','⚠ يجب أن يكون بين 4–20 حرفاً إنجليزياً (حروف وأرقام و _)');
-    setInputState($('r_user'),'error');
-    valid = false;
-  } else {
-    clearErr('r_user_err');
-    setInputState($('r_user'),'success');
-  }
+  if(!password){ setErr('r_pass_err','⚠ كلمة المرور مطلوبة'); setInputState($('r_pass'),'error'); valid=false; }
+  else if(password.length<6){ setErr('r_pass_err','⚠ 6 أحرف على الأقل'); setInputState($('r_pass'),'error'); valid=false; }
+  else { clearErr('r_pass_err'); setInputState($('r_pass'),'success'); }
 
-  /* password validation */
-  if(!password){
-    setErr('r_pass_err','⚠ كلمة المرور مطلوبة');
-    setInputState($('r_pass'),'error');
-    valid = false;
-  } else if(password.length < 6){
-    setErr('r_pass_err','⚠ يجب أن تكون 6 أحرف على الأقل');
-    setInputState($('r_pass'),'error');
-    valid = false;
-  } else {
-    clearErr('r_pass_err');
-    setInputState($('r_pass'),'success');
-  }
-
-  /* confirm validation */
-  if(!confirm){
-    setErr('r_confirm_err','⚠ تأكيد كلمة المرور مطلوب');
-    setInputState($('r_confirm'),'error');
-    valid = false;
-  } else if(confirm !== password){
-    setErr('r_confirm_err','⚠ كلمتا المرور غير متطابقتان');
-    setInputState($('r_confirm'),'error');
-    valid = false;
-  } else {
-    clearErr('r_confirm_err');
-    setInputState($('r_confirm'),'success');
-  }
-
+  if(!confirm){ setErr('r_confirm_err','⚠ تأكيد كلمة المرور مطلوب'); setInputState($('r_confirm'),'error'); valid=false; }
+  else if(confirm!==password){ setErr('r_confirm_err','⚠ كلمتا المرور غير متطابقتان'); setInputState($('r_confirm'),'error'); valid=false; }
+  else { clearErr('r_confirm_err'); setInputState($('r_confirm'),'success'); }
   if(!valid) return;
 
-  /* check duplicate */
-  const users = getUsers();
-  if(users[username.toLowerCase()]){
-    showAlert('اسم المستخدم مستخدم بالفعل، جرّب اسماً آخر.','error');
-    setInputState($('r_user'),'error');
-    return;
+  const btn=this.querySelector('.btn-submit');
+  setLoading(btn,true);
+  try {
+    const res = await fetch(`${API}/register`,{
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({username, password, remember})
+    });
+    const data = await res.json();
+    if(!res.ok){ showAlert(data.error||'خطأ غير معروف','error'); setLoading(btn,false); return; }
+    saveToken(data.token, remember);
+    showSuccess(data.display || data.username);
+  } catch(err) {
+    showAlert('تعذّر الاتصال بالخادم، تحقق من اتصالك','error');
+    setLoading(btn,false);
   }
-
-  /* save user */
-  users[username.toLowerCase()] = { display: username, hash: hashSimple(password) };
-  saveUsers(users);
-  saveSession(username, remember);
-
-  this.querySelector('.btn-submit').disabled = true;
-  showSuccess(username);
 });
 
-/* ──────────────────────────────
-   LIVE INLINE VALIDATION (on blur)
-────────────────────────────── */
-$('r_user').addEventListener('blur', function(){
-  const v = this.value.trim();
-  if(!v){ setErr('r_user_err','⚠ اسم المستخدم مطلوب'); setInputState(this,'error'); return; }
-  if(!/^[a-zA-Z][a-zA-Z0-9_]{3,19}$/.test(v)){ setErr('r_user_err','⚠ 4–20 حرف إنجليزي (حروف/أرقام/_)'); setInputState(this,'error'); return; }
-  clearErr('r_user_err'); setInputState(this,'success');
-});
-$('r_confirm').addEventListener('input', function(){
-  const pw = $('r_pass').value;
-  if(this.value && this.value !== pw){ setErr('r_confirm_err','⚠ غير متطابق'); setInputState(this,'error'); }
-  else if(this.value === pw && this.value){ clearErr('r_confirm_err'); setInputState(this,'success'); }
-});
+/* live validation */
+$('r_user').addEventListener('blur',function(){ const v=this.value.trim(); if(!v){setErr('r_user_err','⚠ مطلوب');setInputState(this,'error');return;} if(!/^[a-zA-Z][a-zA-Z0-9_]{3,19}$/.test(v)){setErr('r_user_err','⚠ 4–20 حرف إنجليزي');setInputState(this,'error');return;} clearErr('r_user_err');setInputState(this,'success'); });
+$('r_confirm').addEventListener('input',function(){ const pw=$('r_pass').value; if(this.value&&this.value!==pw){setErr('r_confirm_err','⚠ غير متطابق');setInputState(this,'error');}else if(this.value===pw&&this.value){clearErr('r_confirm_err');setInputState(this,'success');} });
 </script>
 </body>
 </html>

@@ -25,7 +25,16 @@ app.use(
     },
   }),
 );
-app.use(cors());
+app.use(cors({
+  origin: [
+    "https://whatsa-king.onrender.com",
+    /\.replit\.dev$/,
+    /\.replit\.app$/,
+    "http://localhost:3000",
+    "http://localhost:5173",
+  ],
+  credentials: true,
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
