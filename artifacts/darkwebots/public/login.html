@@ -1,23 +1,6 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <!-- ── TOKEN GUARD: redirect immediately if already logged in ── -->
-  <script>
-    (function(){
-      try{
-        var t=localStorage.getItem('dw_jwt')||((document.cookie.match(/dw_jwt=([^;]+)/)||[])[1])||null;
-        if(t){
-          var p=JSON.parse(atob(t.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')));
-          if(p&&p.exp*1000>Date.now()){window.location.replace('/app.html');return;}
-        }
-        localStorage.removeItem('dw_jwt');
-        document.cookie='dw_jwt=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
-      }catch(e){}
-      document.documentElement.style.visibility='visible';
-    })();
-  </script>
-  <style>html{visibility:hidden}</style>
-  <!-- ── END TOKEN GUARD ── -->
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>واتساب نسخه مشفره</title>
