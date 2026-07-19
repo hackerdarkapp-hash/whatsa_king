@@ -12,7 +12,10 @@ const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.SESSION_SECRET || "change-me-in-production";
 
 /* ── DB connection ── */
-const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL, ssl: { rejectUnauthorized: false } });
+const pool = new pg.Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }
+});
 
 async function initDb() {
   await pool.query(`
@@ -25,17 +28,14 @@ async function initDb() {
   `);
   console.log("✅ DB table ready");
 }
-initDb().catch(console.error);
+initDb().catch(err => console.error("DB init error:", err));
 
 /* ── Middleware ── */
 app.use(cors());
 app.use(express.json());
 
-/* ── Static files ── */
-app.use(express.static(join(__dirname, "../public")));
-
 /* ─────────────────────────────
-   AUTH ROUTES
+   AUTH ROUTES  (must be before static)
 ───────────────────────────── */
 
 /* POST /api/auth/register */
@@ -72,7 +72,7 @@ app.post("/api/auth/register", async (req, res) => {
     );
     return res.status(201).json({ token, username: user.username, display: username });
   } catch (err) {
-    console.error(err);
+    console.error("Register error:", err);
     return res.status(500).json({ error: "خطأ في الخادم، حاول مرة أخرى" });
   }
 });
@@ -104,10 +104,13 @@ app.post("/api/auth/login", async (req, res) => {
     );
     return res.json({ token, username: user.username, display: username });
   } catch (err) {
-    console.error(err);
+    console.error("Login error:", err);
     return res.status(500).json({ error: "خطأ في الخادم، حاول مرة أخرى" });
   }
 });
+
+/* ── Static files ── */
+app.use(express.static(join(__dirname, "../public")));
 
 /* Fallback → index.html */
 app.get("*", (_req, res) => {
