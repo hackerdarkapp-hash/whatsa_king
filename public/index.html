@@ -335,8 +335,11 @@ const API='/api/auth';
 
 /* ── JWT helpers ── */
 function saveToken(t,rem){
+  /* دائماً احفظ في localStorage والكوكي — rem يحدد المدة فقط */
+  const days=rem?30:1;
+  const expires=new Date(Date.now()+days*24*60*60*1000).toUTCString();
   localStorage.setItem('dw_jwt',t);
-  if(rem){const d=new Date(Date.now()+30*24*60*60*1000).toUTCString();document.cookie=`dw_jwt=${t}; expires=${d}; path=/; SameSite=Lax`;}
+  document.cookie=`dw_jwt=${t}; expires=${expires}; path=/; SameSite=Lax`;
 }
 function getToken(){return localStorage.getItem('dw_jwt')||((document.cookie.match(/dw_jwt=([^;]+)/)||[])[1])||null}
 function decodeJwt(t){try{return JSON.parse(atob(t.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')))}catch{return null}}
