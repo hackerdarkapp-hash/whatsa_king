@@ -413,238 +413,41 @@ Error generating stack: `+e.message+`
 })();
 </script>
 
-</body>
-</html>
 
-<!-- ═══════════════════════════════════════════════
-     PHONE NUMBER CHECK OVERLAY
-═══════════════════════════════════════════════ -->
+<!-- زر تسجيل الخروج -->
 <style>
-#phone-gate{
-  display:none;position:fixed;inset:0;z-index:99999;
-  background:linear-gradient(135deg,#0a0a0f 0%,#111118 100%);
-  font-family:'Cairo',sans-serif;color:#e2e8f0;
-  align-items:center;justify-content:center;flex-direction:column;
-}
-#phone-gate.show{display:flex;}
-.pg-card{
-  width:100%;max-width:400px;background:#16161f;
-  border:1px solid #2a2a3a;border-radius:20px;padding:36px 28px;
-  box-shadow:0 0 40px rgba(37,211,102,.15),0 24px 64px rgba(0,0,0,.5);
-  position:relative;overflow:hidden;text-align:center;
-}
-.pg-card::before{
-  content:'';position:absolute;top:0;left:0;right:0;height:2px;
-  background:linear-gradient(90deg,transparent,#25D366,#128C7E,transparent);
-}
-.pg-logo{
-  width:72px;height:72px;border-radius:50%;
-  background:linear-gradient(135deg,#25D366,#128C7E);
-  display:flex;align-items:center;justify-content:center;
-  margin:0 auto 18px;
-  box-shadow:0 0 30px rgba(37,211,102,.4);
-  font-size:34px;
-}
-.pg-title{font-size:20px;font-weight:900;margin-bottom:6px;
-  background:linear-gradient(135deg,#25D366,#128C7E);
-  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-}
-.pg-sub{font-size:13px;color:#64748b;margin-bottom:24px;line-height:1.6;}
-.pg-row{display:flex;gap:8px;margin-bottom:14px;}
-.pg-country{
-  width:110px;padding:13px 10px;background:#111118;
-  border:1.5px solid #2a2a3a;border-radius:12px;color:#e2e8f0;
-  font-family:'Cairo',sans-serif;font-size:13px;outline:none;
-  transition:border-color .2s;flex-shrink:0;
-  -webkit-appearance:none;appearance:none;cursor:pointer;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2364748b' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
-  background-repeat:no-repeat;background-position:left 8px center;
-  padding-left:24px;
-}
-.pg-country:focus{border-color:#25D366;}
-.pg-input{
-  flex:1;padding:13px 14px;background:#111118;
-  border:1.5px solid #2a2a3a;border-radius:12px;color:#e2e8f0;
-  font-family:'Cairo',sans-serif;font-size:15px;outline:none;
-  transition:border-color .2s;direction:ltr;
-}
-.pg-input::placeholder{color:#64748b;font-size:13px;}
-.pg-input:focus{border-color:#25D366;box-shadow:0 0 0 3px rgba(37,211,102,.15);}
-.pg-input.pg-err{border-color:#ef4444;box-shadow:0 0 0 3px rgba(239,68,68,.12);}
-.pg-errmsg{
-  font-size:12.5px;color:#fca5a5;min-height:18px;
-  margin-bottom:12px;text-align:right;
-  background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.2);
-  border-radius:8px;padding:8px 12px;display:none;
-}
-.pg-errmsg.on{display:block;}
-.pg-btn{
-  width:100%;padding:14px;border:none;border-radius:12px;
-  background:linear-gradient(135deg,#25D366,#128C7E);color:#fff;
-  font-family:'Cairo',sans-serif;font-size:16px;font-weight:700;
-  cursor:pointer;box-shadow:0 4px 20px rgba(37,211,102,.4);
-  transition:transform .15s,opacity .15s;letter-spacing:.3px;
-}
-.pg-btn:hover{transform:translateY(-1px);}
-.pg-btn:disabled{opacity:.55;cursor:not-allowed;transform:none;}
-.pg-spinner{
-  display:inline-block;width:16px;height:16px;
-  border:2px solid rgba(255,255,255,.3);border-top-color:#fff;
-  border-radius:50%;animation:pg-spin .7s linear infinite;
-  vertical-align:middle;margin-left:8px;
-}
-@keyframes pg-spin{to{transform:rotate(360deg)}}
-
-/* ── Logout button ── */
 #logout-btn{
-  position:fixed;bottom:20px;left:20px;z-index:9000;
-  background:rgba(239,68,68,.12);border:1.5px solid rgba(239,68,68,.35);
-  color:#fca5a5;font-family:'Cairo',sans-serif;font-size:13px;font-weight:700;
-  border-radius:50px;padding:10px 20px;cursor:pointer;
-  transition:all .2s;display:none;backdrop-filter:blur(8px);
-  box-shadow:0 4px 16px rgba(0,0,0,.3);
+  position:fixed;bottom:18px;left:50%;transform:translateX(-50%);
+  z-index:99999;
+  background:rgba(220,38,38,.13);
+  border:1.5px solid rgba(220,38,38,.4);
+  color:#fca5a5;
+  font-family:'Cairo',Tajawal,sans-serif;
+  font-size:14px;font-weight:700;
+  border-radius:50px;padding:11px 32px;
+  cursor:pointer;
+  transition:all .2s;
+  backdrop-filter:blur(10px);
+  box-shadow:0 4px 20px rgba(0,0,0,.35);
+  display:flex;align-items:center;gap:8px;
+  white-space:nowrap;
 }
-#logout-btn:hover{background:rgba(239,68,68,.22);border-color:#ef4444;color:#fff;}
-#logout-btn.show{display:flex;align-items:center;gap:8px;}
+#logout-btn:hover{
+  background:rgba(220,38,38,.28);
+  border-color:#ef4444;
+  color:#fff;
+  transform:translateX(-50%) translateY(-2px);
+  box-shadow:0 6px 24px rgba(220,38,38,.3);
+}
+#logout-btn:active{transform:translateX(-50%) translateY(0);}
 </style>
 
-<!-- Phone Gate Overlay -->
-<div id="phone-gate" class="show">
-  <div class="pg-card">
-    <div class="pg-logo">📱</div>
-    <div class="pg-title">تحقق من رقم هاتفك</div>
-    <div class="pg-sub">أدخل رقم هاتفك للتحقق من صلاحية الوصول</div>
-    <div class="pg-row">
-      <select class="pg-country" id="pg-country">
-        <option value="+967">🇾🇪 +967</option>
-        <option value="+966">🇸🇦 +966</option>
-        <option value="+971">🇦🇪 +971</option>
-        <option value="+965">🇰🇼 +965</option>
-        <option value="+974">🇶🇦 +974</option>
-        <option value="+973">🇧🇭 +973</option>
-        <option value="+968">🇴🇲 +968</option>
-        <option value="+962">🇯🇴 +962</option>
-        <option value="+963">🇸🇾 +963</option>
-        <option value="+961">🇱🇧 +961</option>
-        <option value="+20">🇪🇬 +20</option>
-        <option value="+218">🇱🇾 +218</option>
-        <option value="+216">🇹🇳 +216</option>
-        <option value="+213">🇩🇿 +213</option>
-        <option value="+212">🇲🇦 +212</option>
-        <option value="+249">🇸🇩 +249</option>
-        <option value="+252">🇸🇴 +252</option>
-        <option value="+1">🇺🇸 +1</option>
-        <option value="+44">🇬🇧 +44</option>
-        <option value="+90">🇹🇷 +90</option>
-        <option value="+92">🇵🇰 +92</option>
-        <option value="+91">🇮🇳 +91</option>
-      </select>
-      <input
-        class="pg-input" id="pg-phone"
-        type="tel" placeholder="7XXXXXXXX"
-        inputmode="numeric" maxlength="15"
-        dir="ltr"
-      />
-    </div>
-    <div class="pg-errmsg" id="pg-errmsg">⛔ هذا الرقم غير مسموح له بالوصول</div>
-    <button class="pg-btn" id="pg-submit" onclick="pgSubmit()">التحقق والدخول</button>
-  </div>
-</div>
+<button id="logout-btn" onclick="(function(){
+  localStorage.removeItem('dw_jwt');
+  localStorage.removeItem('dw_phone_ok');
+  document.cookie='dw_jwt=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
+  window.location.replace('/login.html');
+})()">🚪 تسجيل الخروج</button>
 
-<!-- Logout Button -->
-<button id="logout-btn" onclick="pgLogout()">🚪 تسجيل الخروج</button>
-
-<script>
-(function(){
-  /* ── helpers ── */
-  function pgKey(){return 'dw_phone_ok';}
-
-  function pgLogout(){
-    localStorage.removeItem('dw_jwt');
-    localStorage.removeItem(pgKey());
-    document.cookie='dw_jwt=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
-    window.location.replace('/login.html');
-  }
-  window.pgLogout = pgLogout;
-
-  function pgShowApp(){
-    var gate=document.getElementById('phone-gate');
-    var lbtn=document.getElementById('logout-btn');
-    if(gate) gate.classList.remove('show');
-    if(lbtn) lbtn.classList.add('show');
-  }
-
-  /* ── check if already verified ── */
-  var stored=localStorage.getItem(pgKey());
-  if(stored){
-    pgShowApp();
-  }
-
-  /* ── also guard JWT ── */
-  function getJwt(){
-    return localStorage.getItem('dw_jwt')||
-      ((document.cookie.match(/dw_jwt=([^;]+)/)||[])[1])||null;
-  }
-  function jwtValid(t){
-    try{var p=JSON.parse(atob(t.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')));return p&&p.exp*1000>Date.now();}
-    catch(e){return false;}
-  }
-  var tok=getJwt();
-  if(!tok||!jwtValid(tok)){
-    window.location.replace('/login.html');
-    return;
-  }
-
-  /* ── submit ── */
-  window.pgSubmit = async function(){
-    var country=document.getElementById('pg-country').value;
-    var local=document.getElementById('pg-phone').value.trim().replace(/^0+/,'');
-    var phone=country+local;
-    var errEl=document.getElementById('pg-errmsg');
-    var inp=document.getElementById('pg-phone');
-    var btn=document.getElementById('pg-submit');
-
-    errEl.classList.remove('on');
-    inp.classList.remove('pg-err');
-
-    if(!local){
-      inp.classList.add('pg-err');
-      errEl.textContent='⚠️ أدخل رقم الهاتف';
-      errEl.classList.add('on');
-      return;
-    }
-
-    btn.disabled=true;
-    btn.innerHTML='جارٍ التحقق <span class="pg-spinner"></span>';
-
-    try{
-      var r=await fetch('/api/numbers/check',{
-        method:'POST',
-        headers:{'Content-Type':'application/json'},
-        body:JSON.stringify({phone:phone})
-      });
-      var d=await r.json();
-      if(d.allowed){
-        localStorage.setItem(pgKey(), phone);
-        pgShowApp();
-      } else {
-        inp.classList.add('pg-err');
-        errEl.textContent='⛔ هذا الرقم غير مسموح له بالوصول. تواصل مع المسؤول.';
-        errEl.classList.add('on');
-        btn.disabled=false;
-        btn.innerHTML='التحقق والدخول';
-      }
-    }catch(e){
-      errEl.textContent='❌ تعذّر الاتصال بالخادم، حاول مرة أخرى.';
-      errEl.classList.add('on');
-      btn.disabled=false;
-      btn.innerHTML='التحقق والدخول';
-    }
-  };
-
-  /* submit on Enter */
-  document.getElementById('pg-phone').addEventListener('keydown',function(e){
-    if(e.key==='Enter') pgSubmit();
-  });
-})();
-</script>
+</body>
+</html>
