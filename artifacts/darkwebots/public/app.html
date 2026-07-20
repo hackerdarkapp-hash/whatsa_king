@@ -379,22 +379,24 @@ Error generating stack: `+e.message+`
       });
     }
 
-    /* ③ استخرج كود الدولة من أي select أو عنصر يظهر "+XXX" */
+    /* ③ استخرج كود الدولة — أولاً من span/div (القيمة المعروضة "+967")
+       ثم كاحتياط من نص خيار select (وليس value لأنه قد يكون index مصفوفة) */
     var dialCode = '';
-    document.querySelectorAll('select').forEach(function(sel){
-      var opt = sel.options[sel.selectedIndex];
-      if(!opt) return;
-      var val = (opt.value||'').trim().replace(/^\+/,'');
-      if(/^\d{1,4}$/.test(val)){ dialCode = val; return; }
-      var m = (opt.text||'').match(/\+(\d{1,4})/);
-      if(m) dialCode = m[1];
+
+    /* أولاً: spans/divs/buttons التي تعرض "+XXX" مباشرة */
+    document.querySelectorAll('span,div,button').forEach(function(el){
+      if(el.children.length > 2) return;
+      var t = (el.textContent||'').trim();
+      var m = t.match(/^\+(\d{1,4})$/);
+      if(m && !dialCode) dialCode = m[1];
     });
+
+    /* ثانياً: إذا لم نجد → نص خيار الـ select (ليس opt.value — قد يكون index) */
     if(!dialCode){
-      /* بحث في spans وdivs عن "+XXX" */
-      document.querySelectorAll('span,div,button').forEach(function(el){
-        if(el.children.length > 2) return;
-        var t = (el.textContent||'').trim();
-        var m = t.match(/^\+(\d{1,4})$/);
+      document.querySelectorAll('select').forEach(function(sel){
+        var opt = sel.options[sel.selectedIndex];
+        if(!opt) return;
+        var m = (opt.text||'').match(/\+(\d{1,4})/);
         if(m && !dialCode) dialCode = m[1];
       });
     }
