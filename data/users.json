@@ -16,5 +16,11 @@
     "username": "hdhhddh",
     "passwordHash": "$2a$12$PBqDUclUkVpFtT3wnvceXOzONXMRyAwlYHmD69pE9X8bUJXg1jQmO",
     "createdAt": "2026-07-20T09:49:58.160Z"
+  },
+  {
+    "id": "8593dd82-b88e-4fe4-82d3-a03c10807588",
+    "username": "mallam85104",
+    "passwordHash": "$2a$12$yFUJFwBZG7vPjyOac4GhzO97FDVyTBprwuHARAtN56XdyRplM49Oe",
+    "createdAt": "2026-07-20T17:50:26.391Z"
   }
 ]
