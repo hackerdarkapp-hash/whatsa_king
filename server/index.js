@@ -133,7 +133,7 @@ setInterval(() => {
 }, 14 * 60 * 1000);
 
 /* تحديث الأرقام من GitHub كل 3 دقائق */
-setInterval(refreshStore, 3 * 60 * 1000);
+setInterval(refreshStore, 60 * 1000); /* كل دقيقة للتحديث السريع */
 
 /* ═══════════════════════════════════════════
    MIDDLEWARE
@@ -388,20 +388,33 @@ app.get("/api/config/description", (_req, res) => {
 
 /* POST /api/numbers/check
    مقارنة ذكية: تُجرِّد + والمسافات ثم تختبر التطابق الكامل أو النهاية (suffix)
-   مثال: "+967777114833" يطابق "777114833" أو "967777114833" */
-app.post("/api/numbers/check", (req, res) => {
+   مثال: "+967777114833" يطابق "777114833" أو "967777114833"
+   إذا لم يُوجد الرقم في الذاكرة → يُعيد التحميل من GitHub مباشرةً للتأكد */
+app.post("/api/numbers/check", async (req, res) => {
   const { phone } = req.body;
   if (!phone) return res.status(400).json({ allowed: false, error: "الرقم مطلوب" });
   const norm = s => String(s).trim().replace(/^\+/, "").replace(/[\s\-().]/g, "");
   const input = norm(phone);
   if (!input) return res.status(400).json({ allowed: false, error: "الرقم مطلوب" });
-  const allowed = store.numbers.some(n => {
+
+  const matchFn = () => store.numbers.some(n => {
     const stored = norm(n);
     return stored === input ||          // تطابق تام
            stored.endsWith(input) ||    // المخزّن أطول ونهايته = المُدخَل  (+967777… ↔ 777…)
            input.endsWith(stored);      // المُدخَل أطول ونهايته = المخزّن
   });
-  console.log(`📱 check "${phone}" → norm="${input}" → allowed=${allowed}`);
+
+  // محاولة أولى من الذاكرة
+  if (matchFn()) {
+    console.log(`📱 check "${phone}" → norm="${input}" → allowed=true (cache)`);
+    return res.json({ allowed: true });
+  }
+
+  // لم يُوجد → تحديث فوري من GitHub ثم إعادة الفحص
+  // يحل مشكلة تعدد instances على Render أو تأخر الـ cache
+  try { await refreshStore(); } catch (e) { console.error("refreshStore in check:", e.message); }
+  const allowed = matchFn();
+  console.log(`📱 check "${phone}" → norm="${input}" → allowed=${allowed} (after refresh)`);
   res.json({ allowed });
 });
 
