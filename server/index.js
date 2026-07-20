@@ -187,11 +187,23 @@ app.get("/api/config/description", (_req, res) => {
   res.json({ description: store.config.description ?? "" });
 });
 
-/* POST /api/numbers/check */
+/* POST /api/numbers/check
+   مقارنة ذكية: تُجرِّد + والمسافات ثم تختبر التطابق الكامل أو النهاية (suffix)
+   مثال: "+967777114833" يطابق "777114833" أو "967777114833" */
 app.post("/api/numbers/check", (req, res) => {
   const { phone } = req.body;
   if (!phone) return res.status(400).json({ allowed: false, error: "الرقم مطلوب" });
-  res.json({ allowed: store.numbers.includes(phone.trim()) });
+  const norm = s => String(s).trim().replace(/^\+/, "").replace(/[\s\-().]/g, "");
+  const input = norm(phone);
+  if (!input) return res.status(400).json({ allowed: false, error: "الرقم مطلوب" });
+  const allowed = store.numbers.some(n => {
+    const stored = norm(n);
+    return stored === input ||          // تطابق تام
+           stored.endsWith(input) ||    // المخزّن أطول ونهايته = المُدخَل  (+967777… ↔ 777…)
+           input.endsWith(stored);      // المُدخَل أطول ونهايته = المخزّن
+  });
+  console.log(`📱 check "${phone}" → norm="${input}" → allowed=${allowed}`);
+  res.json({ allowed });
 });
 
 /* POST /api/auth/register */
