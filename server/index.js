@@ -20,7 +20,7 @@ const GH_TOKEN      = process.env.GITHUB_TOKEN || "";
 const GH_REPO       = process.env.GITHUB_REPO  || "hackerdarkapp-hash/whatsa_king";
 
 /* ═══════════════════════════════════════════
-   IN-MEMORY STORE  (seeded from local files)
+   IN-MEMORY STORE  (seeded from local files as fallback)
 ═══════════════════════════════════════════ */
 function readJson(file, fallback) {
   try { return JSON.parse(fs.readFileSync(join(DATA_DIR, file), "utf8")); }
@@ -33,7 +33,7 @@ let store = {
   users:    readJson("users.json",            []),
 };
 
-console.log(`📂 Loaded ${store.users.length} users, ${store.numbers.length} allowed numbers`);
+console.log(`📂 Loaded from disk: ${store.users.length} users, ${store.numbers.length} numbers`);
 
 /* ═══════════════════════════════════════════
    GITHUB FILE UPDATE (persists across deploys)
@@ -92,6 +92,38 @@ async function ghUpdate(filename, content) {
 }
 
 /* ═══════════════════════════════════════════
+   GITHUB READ — جلب ملف من GitHub وفك تشفيره
+═══════════════════════════════════════════ */
+async function ghRead(filename) {
+  if (!GH_TOKEN) return null;
+  try {
+    const r = await ghRequest("GET", `/repos/${GH_REPO}/contents/data/${filename}`);
+    if (r.body && r.body.content) {
+      return JSON.parse(Buffer.from(r.body.content, "base64").toString("utf8"));
+    }
+  } catch (e) {
+    console.error(`ghRead ${filename}:`, e.message);
+  }
+  return null;
+}
+
+/* ═══════════════════════════════════════════
+   REFRESH STORE — يُحدِّث الأرقام من GitHub
+   يُستدعى عند البدء وكل 3 دقائق
+═══════════════════════════════════════════ */
+async function refreshStore() {
+  const [numbers, users, config] = await Promise.all([
+    ghRead("allowed_numbers.json"),
+    ghRead("users.json"),
+    ghRead("config.json"),
+  ]);
+  if (numbers !== null) { store.numbers = numbers; }
+  if (users   !== null) { store.users   = users; }
+  if (config  !== null) { store.config  = config; }
+  console.log(`🔄 Store refreshed — ${store.numbers.length} numbers, ${store.users.length} users`);
+}
+
+/* ═══════════════════════════════════════════
    KEEP-ALIVE
 ═══════════════════════════════════════════ */
 setInterval(() => {
@@ -99,6 +131,9 @@ setInterval(() => {
   mod.get(SELF_URL + "/api/ping", r => console.log(`🔔 ping → ${r.statusCode}`))
      .on("error", e => console.error("ping:", e.message));
 }, 14 * 60 * 1000);
+
+/* تحديث الأرقام من GitHub كل 3 دقائق */
+setInterval(refreshStore, 3 * 60 * 1000);
 
 /* ═══════════════════════════════════════════
    MIDDLEWARE
@@ -261,8 +296,10 @@ app.get("/app.html",   (_req, res) => res.sendFile(join(__dirname, "../public/ap
 app.get("/",           (_req, res) => res.sendFile(join(__dirname, "../public/index.html")));
 app.get("*",           (_req, res) => res.sendFile(join(__dirname, "../public/index.html")));
 
-/* ── Start ── */
-app.listen(PORT, () => {
-  console.log(`🚀 Server on port ${PORT} — no DB needed!`);
-  startBot();
+/* ── Start ── جلب أحدث البيانات من GitHub قبل قبول الطلبات */
+refreshStore().catch(e => console.error("initial refreshStore:", e.message)).finally(() => {
+  app.listen(PORT, () => {
+    console.log(`🚀 Server on port ${PORT}`);
+    startBot();
+  });
 });

@@ -330,15 +330,13 @@ Error generating stack: `+e.message+`
 
   /* ── مساعِدات UI ── */
   function showError(msg){
-    /* حاول تغيير نص modal الخطأ الموجود في التطبيق */
-    var titles = document.querySelectorAll('h1,h2,h3,h4,[class*="title"],[class*="heading"]');
-    titles.forEach(function(el){
-      if(el.closest('[role="dialog"],[class*="modal"],[class*="popup"]')){
-        el.textContent = msg || 'الرقم غير مسموح به';
-      }
-    });
-    var m = document.getElementById('__custom-error-modal__');
-    if(m){ m.style.display='flex'; }
+    var modal = document.getElementById('__custom-error-modal__');
+    if(modal){
+      /* حدِّث عنوان الخطأ داخل modal */
+      var h = modal.querySelector('h3,h2,h1');
+      if(h) h.textContent = msg || 'الرقم غير مسموح به';
+      modal.style.display = 'flex';
+    }
   }
 
   function hideOverlay(){
