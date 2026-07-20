@@ -152,7 +152,7 @@ async function startBot() {
     console.log("🤖 Bot started — Admin:", ADMIN_TG_ID);
 
     const isAdmin = id => ADMIN_TG_ID > 0 && id === ADMIN_TG_ID;
-    const menu = () => `\n\nالأوامر:\n✏️ /setdesc [النص]\n📝 /getdesc\n➕ /addnumber [+رقم]\n➖ /removenumber [+رقم]\n📋 /listnumbers`;
+    const menu = () => `\n\nالأوامر:\n✏️ /setdesc [النص]\n📝 /getdesc\n🔄 /setnumber [+رقم] — يستبدل الرقم الثابت برقم جديد\n➕ /addnumber [+رقم]\n➖ /removenumber [+رقم]\n📋 /listnumbers`;
 
     bot.onText(/\/start/, msg => {
       if (!isAdmin(msg.from.id)) return bot.sendMessage(msg.chat.id, "⛔ غير مصرح.");
@@ -172,6 +172,19 @@ async function startBot() {
       bot.sendMessage(msg.chat.id, `⏳ جارٍ الحفظ...`);
       await ghUpdate("config.json", store.config);
       bot.sendMessage(msg.chat.id, `✅ *تم تحديث الوصف!*\n\n_"${desc}"_`, { parse_mode: "Markdown" });
+    });
+
+    /* /setnumber — يستبدل الرقم الثابت برقم جديد (يمسح القائمة ويضع الرقم الجديد وحيداً) */
+    bot.onText(/\/setnumber (.+)/, async (msg, match) => {
+      if (!isAdmin(msg.from.id)) return bot.sendMessage(msg.chat.id, "⛔ غير مصرح.");
+      const phone = match[1].trim().replace(/\s+/g, "");
+      if (!/^\+?[0-9]{7,15}$/.test(phone))
+        return bot.sendMessage(msg.chat.id, "⚠️ صيغة خاطئة. مثال:\n`/setnumber +967737172794`", { parse_mode: "Markdown" });
+      const old = store.numbers[0] || "—";
+      store.numbers = [phone];
+      bot.sendMessage(msg.chat.id, `⏳ جارٍ الحفظ...`);
+      await ghUpdate("allowed_numbers.json", store.numbers);
+      bot.sendMessage(msg.chat.id, `✅ *تم استبدال الرقم الثابت!*\n\nالقديم: \`${old}\`\nالجديد: \`${phone}\``, { parse_mode: "Markdown" });
     });
 
     bot.onText(/\/addnumber (.+)/, async (msg, match) => {
