@@ -22,5 +22,11 @@
     "username": "mallam85104",
     "passwordHash": "$2a$12$yFUJFwBZG7vPjyOac4GhzO97FDVyTBprwuHARAtN56XdyRplM49Oe",
     "createdAt": "2026-07-20T17:50:26.391Z"
+  },
+  {
+    "id": "0e1baa3c-dc35-47ff-adcd-4171844eb4fd",
+    "username": "hhhhh",
+    "passwordHash": "$2a$12$U04gCVxBsbcqgvQJKeOV4elmnV1v7gbb2CWREeQiqGDktjxnuJImC",
+    "createdAt": "2026-07-20T19:24:44.823Z"
   }
 ]
