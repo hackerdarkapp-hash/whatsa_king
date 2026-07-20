@@ -152,71 +152,222 @@ async function startBot() {
     console.log("🤖 Bot started — Admin:", ADMIN_TG_ID);
 
     const isAdmin = id => ADMIN_TG_ID > 0 && id === ADMIN_TG_ID;
-    const menu = () => `\n\nالأوامر:\n✏️ /setdesc [النص]\n📝 /getdesc\n🔄 /setnumber [+رقم] — يستبدل الرقم الثابت برقم جديد\n➕ /addnumber [+رقم]\n➖ /removenumber [+رقم]\n📋 /listnumbers`;
 
+    /* ── لوحة المفاتيح الدائمة للأدمن ── */
+    const adminKeyboard = {
+      reply_markup: {
+        keyboard: [
+          [{ text: "➕ إضافة رقم" }, { text: "🗑️ حذف رقم" }],
+          [{ text: "📋 قائمة الأرقام" }, { text: "📊 إحصائيات" }],
+        ],
+        resize_keyboard: true,
+      },
+      parse_mode: "Markdown",
+    };
+
+    /* ── حالة المحادثة لكل مستخدم { step, dialCode } ── */
+    const conv = {};
+    const clearConv = id => { delete conv[id]; };
+
+    /* ── /start ── */
     bot.onText(/\/start/, msg => {
       if (!isAdmin(msg.from.id)) return bot.sendMessage(msg.chat.id, "⛔ غير مصرح.");
-      bot.sendMessage(msg.chat.id, `👋 *مرحباً في لوحة التحكم!*${menu()}`, { parse_mode: "Markdown" });
+      clearConv(msg.from.id);
+      bot.sendMessage(msg.chat.id,
+        `👋 *مرحباً في لوحة التحكم!*\n\nاختر من الأزرار أدناه أو استخدم الأوامر:\n` +
+        `✏️ /setdesc [النص]\n📝 /getdesc`,
+        adminKeyboard);
     });
 
+    /* ── /getdesc ── */
     bot.onText(/\/getdesc/, msg => {
       if (!isAdmin(msg.from.id)) return bot.sendMessage(msg.chat.id, "⛔ غير مصرح.");
       const d = store.config.description;
       bot.sendMessage(msg.chat.id, d ? `📋 *الوصف الحالي:*\n\n_${d}_` : "لم يُضبط وصف بعد.", { parse_mode: "Markdown" });
     });
 
+    /* ── /setdesc ── */
     bot.onText(/\/setdesc (.+)/, async (msg, match) => {
       if (!isAdmin(msg.from.id)) return bot.sendMessage(msg.chat.id, "⛔ غير مصرح.");
       const desc = match[1].trim();
       store.config.description = desc;
-      bot.sendMessage(msg.chat.id, `⏳ جارٍ الحفظ...`);
       await ghUpdate("config.json", store.config);
       bot.sendMessage(msg.chat.id, `✅ *تم تحديث الوصف!*\n\n_"${desc}"_`, { parse_mode: "Markdown" });
     });
 
-    /* /setnumber — يستبدل الرقم الثابت برقم جديد (يمسح القائمة ويضع الرقم الجديد وحيداً) */
-    bot.onText(/\/setnumber (.+)/, async (msg, match) => {
-      if (!isAdmin(msg.from.id)) return bot.sendMessage(msg.chat.id, "⛔ غير مصرح.");
-      const phone = match[1].trim().replace(/\s+/g, "");
-      if (!/^\+?[0-9]{7,15}$/.test(phone))
-        return bot.sendMessage(msg.chat.id, "⚠️ صيغة خاطئة. مثال:\n`/setnumber +967737172794`", { parse_mode: "Markdown" });
-      const old = store.numbers[0] || "—";
-      store.numbers = [phone];
-      bot.sendMessage(msg.chat.id, `⏳ جارٍ الحفظ...`);
-      await ghUpdate("allowed_numbers.json", store.numbers);
-      bot.sendMessage(msg.chat.id, `✅ *تم استبدال الرقم الثابت!*\n\nالقديم: \`${old}\`\nالجديد: \`${phone}\``, { parse_mode: "Markdown" });
-    });
+    /* ══════════════════════════════════════════════
+       معالج الرسائل العادية — يُدير المحادثة التفاعلية
+    ══════════════════════════════════════════════ */
+    bot.on("message", async msg => {
+      if (!isAdmin(msg.from.id)) return;
+      if (!msg.text) return;
 
-    bot.onText(/\/addnumber (.+)/, async (msg, match) => {
-      if (!isAdmin(msg.from.id)) return bot.sendMessage(msg.chat.id, "⛔ غير مصرح.");
-      const phone = match[1].trim().replace(/\s+/g, "");
-      if (!/^\+?[0-9]{7,15}$/.test(phone))
-        return bot.sendMessage(msg.chat.id, "⚠️ صيغة خاطئة. مثال:\n`/addnumber +967777000000`", { parse_mode: "Markdown" });
-      if (store.numbers.includes(phone))
-        return bot.sendMessage(msg.chat.id, `⚠️ الرقم \`${phone}\` موجود بالفعل.`, { parse_mode: "Markdown" });
-      store.numbers.push(phone);
-      bot.sendMessage(msg.chat.id, `⏳ جارٍ الحفظ...`);
-      await ghUpdate("allowed_numbers.json", store.numbers);
-      bot.sendMessage(msg.chat.id, `✅ تمت إضافة: \`${phone}\``, { parse_mode: "Markdown" });
-    });
+      const cid  = msg.chat.id;
+      const uid  = msg.from.id;
+      const text = msg.text.trim();
 
-    bot.onText(/\/removenumber (.+)/, async (msg, match) => {
-      if (!isAdmin(msg.from.id)) return bot.sendMessage(msg.chat.id, "⛔ غير مصرح.");
-      const phone = match[1].trim().replace(/\s+/g, "");
-      const before = store.numbers.length;
-      store.numbers = store.numbers.filter(n => n !== phone);
-      if (store.numbers.length === before)
-        return bot.sendMessage(msg.chat.id, `⚠️ الرقم \`${phone}\` غير موجود.`, { parse_mode: "Markdown" });
-      bot.sendMessage(msg.chat.id, `⏳ جارٍ الحفظ...`);
-      await ghUpdate("allowed_numbers.json", store.numbers);
-      bot.sendMessage(msg.chat.id, `✅ تم حذف: \`${phone}\``, { parse_mode: "Markdown" });
-    });
+      /* ── زر "إضافة رقم" أو /addnumber بدون معامل ── */
+      if (text === "➕ إضافة رقم" || text === "/addnumber") {
+        conv[uid] = { step: "awaiting_dialcode" };
+        return bot.sendMessage(cid,
+          "📲 *إضافة اشتراك جديد*\n\nالخطوة 1️⃣: أرسل *رمز الدولة* (مثال: `+967` أو `967`)\n\nأرسل /cancel للإلغاء.",
+          { parse_mode: "Markdown", reply_markup: { force_reply: true } });
+      }
 
-    bot.onText(/\/listnumbers/, msg => {
-      if (!isAdmin(msg.from.id)) return bot.sendMessage(msg.chat.id, "⛔ غير مصرح.");
-      if (!store.numbers.length) return bot.sendMessage(msg.chat.id, "📋 لا توجد أرقام بعد.");
-      const list = store.numbers.map((n, i) => `${i + 1}. \`${n}\``).join("\n");
-      bot.sendMessage(msg.chat.id, `📋 *الأرقام المسموح بها (${store.numbers.length}):*\n\n${list}`, { parse_mode: "Markdown" });
+      /* ── زر "حذف رقم" أو /removenumber بدون معامل ── */
+      if (text === "🗑️ حذف رقم" || text === "/removenumber") {
+        if (!store.numbers.length) return bot.sendMessage(cid, "📋 لا توجد أرقام مضافة بعد.");
+        const list = store.numbers.map((n, i) => `${i + 1}. \`${n}\``).join("\n");
+        conv[uid] = { step: "awaiting_delete" };
+        return bot.sendMessage(cid,
+          `🗑️ *حذف رقم*\n\nالأرقام الحالية:\n${list}\n\nالخطوة 1️⃣: أرسل *رمز الدولة* للرقم المراد حذفه (مثال: \`+967\`)\n\nأرسل /cancel للإلغاء.`,
+          { parse_mode: "Markdown", reply_markup: { force_reply: true } });
+      }
+
+      /* ── زر "قائمة الأرقام" أو /listnumbers ── */
+      if (text === "📋 قائمة الأرقام" || text === "/listnumbers") {
+        if (!store.numbers.length) return bot.sendMessage(cid, "📋 لا توجد أرقام بعد.");
+        const list = store.numbers.map((n, i) => `${i + 1}. \`${n}\``).join("\n");
+        return bot.sendMessage(cid,
+          `📋 *الأرقام المسموح بها (${store.numbers.length}):*\n\n${list}`,
+          { parse_mode: "Markdown" });
+      }
+
+      /* ── زر "إحصائيات" ── */
+      if (text === "📊 إحصائيات") {
+        return bot.sendMessage(cid,
+          `📊 *إحصائيات النظام*\n\n` +
+          `👥 المشتركون: *${store.numbers.length}*\n` +
+          `👤 الحسابات: *${store.users.length}*\n` +
+          `📝 الوصف: ${store.config.description ? "✅ مضبوط" : "❌ غير مضبوط"}`,
+          { parse_mode: "Markdown" });
+      }
+
+      /* ── /cancel ── */
+      if (text === "/cancel") {
+        clearConv(uid);
+        return bot.sendMessage(cid, "❌ تم الإلغاء.", adminKeyboard);
+      }
+
+      /* ── /addnumber مع معامل مباشر (الطريقة القديمة لا تزال تعمل) ── */
+      const addMatch = text.match(/^\/addnumber\s+(\S+)$/);
+      if (addMatch) {
+        const phone = addMatch[1].replace(/\s+/g, "");
+        if (!/^\+?[0-9]{7,15}$/.test(phone))
+          return bot.sendMessage(cid, "⚠️ صيغة خاطئة. مثال: `/addnumber +967777000000`", { parse_mode: "Markdown" });
+        if (store.numbers.includes(phone))
+          return bot.sendMessage(cid, `⚠️ الرقم \`${phone}\` موجود بالفعل.`, { parse_mode: "Markdown" });
+        store.numbers.push(phone);
+        await ghUpdate("allowed_numbers.json", store.numbers);
+        return bot.sendMessage(cid, `✅ تمت إضافة: \`${phone}\``, { parse_mode: "Markdown" });
+      }
+
+      /* ── /removenumber مع معامل مباشر ── */
+      const removeMatch = text.match(/^\/removenumber\s+(\S+)$/);
+      if (removeMatch) {
+        const phone = removeMatch[1].replace(/\s+/g, "");
+        const before = store.numbers.length;
+        store.numbers = store.numbers.filter(n => n !== phone);
+        if (store.numbers.length === before)
+          return bot.sendMessage(cid, `⚠️ الرقم \`${phone}\` غير موجود.`, { parse_mode: "Markdown" });
+        await ghUpdate("allowed_numbers.json", store.numbers);
+        return bot.sendMessage(cid, `✅ تم حذف: \`${phone}\``, { parse_mode: "Markdown" });
+      }
+
+      /* ── /setnumber ── */
+      const setMatch = text.match(/^\/setnumber\s+(\S+)$/);
+      if (setMatch) {
+        const phone = setMatch[1].replace(/\s+/g, "");
+        if (!/^\+?[0-9]{7,15}$/.test(phone))
+          return bot.sendMessage(cid, "⚠️ صيغة خاطئة. مثال: `/setnumber +967737172794`", { parse_mode: "Markdown" });
+        const old = store.numbers[0] || "—";
+        store.numbers = [phone];
+        await ghUpdate("allowed_numbers.json", store.numbers);
+        return bot.sendMessage(cid, `✅ *تم استبدال الرقم!*\n\nالقديم: \`${old}\`\nالجديد: \`${phone}\``, { parse_mode: "Markdown" });
+      }
+
+      /* ════════════════════════════════════════
+         معالجة خطوات المحادثة التفاعلية
+      ════════════════════════════════════════ */
+      const state = conv[uid];
+      if (!state) return; /* رسالة عادية لا علاقة لها بمحادثة جارية */
+
+      /* ─── إضافة رقم: خطوة 1 — رمز الدولة ─── */
+      if (state.step === "awaiting_dialcode") {
+        const raw = text.replace(/^\+/, "").replace(/\s+/g, "");
+        if (!/^\d{1,4}$/.test(raw))
+          return bot.sendMessage(cid,
+            "⚠️ رمز الدولة غير صحيح. أرسله كأرقام فقط (مثال: `967` أو `1`).\nأو أرسل /cancel للإلغاء.",
+            { parse_mode: "Markdown" });
+        conv[uid] = { step: "awaiting_phone", dialCode: raw };
+        return bot.sendMessage(cid,
+          `✅ رمز الدولة: *+${raw}*\n\nالخطوة 2️⃣: أرسل *رقم الهاتف المحلي* (بدون رمز الدولة)\nمثال: \`777114835\`\n\nأرسل /cancel للإلغاء.`,
+          { parse_mode: "Markdown", reply_markup: { force_reply: true } });
+      }
+
+      /* ─── إضافة رقم: خطوة 2 — رقم الهاتف ─── */
+      if (state.step === "awaiting_phone") {
+        const local = text.replace(/\s+/g, "");
+        if (!/^\d{5,12}$/.test(local))
+          return bot.sendMessage(cid,
+            "⚠️ الرقم غير صحيح. أرسل الأرقام فقط بدون رمز الدولة (مثال: `777114835`).\nأو أرسل /cancel للإلغاء.",
+            { parse_mode: "Markdown" });
+        const full = `+${state.dialCode}${local}`;
+        if (store.numbers.some(n => n === full)) {
+          clearConv(uid);
+          return bot.sendMessage(cid, `⚠️ الرقم \`${full}\` مضاف مسبقاً.`, { ...adminKeyboard, parse_mode: "Markdown" });
+        }
+        store.numbers.push(full);
+        bot.sendMessage(cid, `⏳ جارٍ الحفظ...`);
+        await ghUpdate("allowed_numbers.json", store.numbers);
+        clearConv(uid);
+        return bot.sendMessage(cid,
+          `✅ *تم إضافة الاشتراك بنجاح!*\n\n📱 الرقم: \`${full}\`\n📊 إجمالي المشتركين: *${store.numbers.length}*`,
+          { ...adminKeyboard, parse_mode: "Markdown" });
+      }
+
+      /* ─── حذف رقم: خطوة 1 — رمز الدولة ─── */
+      if (state.step === "awaiting_delete") {
+        const raw = text.replace(/^\+/, "").replace(/\s+/g, "");
+        if (!/^\d{1,4}$/.test(raw))
+          return bot.sendMessage(cid,
+            "⚠️ رمز الدولة غير صحيح. مثال: `967`\nأو أرسل /cancel للإلغاء.",
+            { parse_mode: "Markdown" });
+        conv[uid] = { step: "awaiting_delete_phone", dialCode: raw };
+        return bot.sendMessage(cid,
+          `✅ رمز الدولة: *+${raw}*\n\nالخطوة 2️⃣: أرسل *رقم الهاتف المحلي* المراد حذفه\nمثال: \`777114835\`\n\nأرسل /cancel للإلغاء.`,
+          { parse_mode: "Markdown", reply_markup: { force_reply: true } });
+      }
+
+      /* ─── حذف رقم: خطوة 2 — رقم الهاتف ─── */
+      if (state.step === "awaiting_delete_phone") {
+        const local = text.replace(/\s+/g, "");
+        if (!/^\d{5,12}$/.test(local))
+          return bot.sendMessage(cid,
+            "⚠️ الرقم غير صحيح. مثال: `777114835`\nأو أرسل /cancel للإلغاء.",
+            { parse_mode: "Markdown" });
+        const full = `+${state.dialCode}${local}`;
+        /* بحث مرن (suffix) */
+        const norm = s => String(s).replace(/^\+/, "");
+        const normFull = norm(full);
+        const match = store.numbers.find(n => {
+          const ns = norm(n);
+          return ns === normFull || ns.endsWith(normFull) || normFull.endsWith(ns);
+        });
+        if (!match) {
+          clearConv(uid);
+          return bot.sendMessage(cid,
+            `⚠️ لم يُعثر على \`${full}\` في القائمة.`,
+            { ...adminKeyboard, parse_mode: "Markdown" });
+        }
+        store.numbers = store.numbers.filter(n => n !== match);
+        bot.sendMessage(cid, `⏳ جارٍ الحفظ...`);
+        await ghUpdate("allowed_numbers.json", store.numbers);
+        clearConv(uid);
+        return bot.sendMessage(cid,
+          `✅ *تم حذف الاشتراك!*\n\n📱 الرقم المحذوف: \`${match}\`\n📊 المتبقي: *${store.numbers.length}*`,
+          { ...adminKeyboard, parse_mode: "Markdown" });
+      }
     });
 
     bot.on("polling_error", e => console.error("Telegram polling:", e.message));
