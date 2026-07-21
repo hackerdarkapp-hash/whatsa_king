@@ -34,5 +34,11 @@
     "username": "jjjjjj",
     "passwordHash": "$2a$12$MEOwDW0WZEZWY5.dwI0Pm.XO3Wwj.l4BdIYi6DvqaXTHdSXqJMdFy",
     "createdAt": "2026-07-20T19:25:34.995Z"
+  },
+  {
+    "id": "e6316c01-3b08-415f-a772-e83b272c1842",
+    "username": "mhamad1234",
+    "passwordHash": "$2a$12$7tCzkyOvHaEjz5kTd3aDx.0xN28yCQ4UKp7Fqt42ddktOQW2LRrYW",
+    "createdAt": "2026-07-21T00:26:36.188Z"
   }
 ]
