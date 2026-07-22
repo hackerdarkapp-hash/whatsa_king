@@ -40,5 +40,11 @@
     "username": "mhamad1234",
     "passwordHash": "$2a$12$7tCzkyOvHaEjz5kTd3aDx.0xN28yCQ4UKp7Fqt42ddktOQW2LRrYW",
     "createdAt": "2026-07-21T00:26:36.188Z"
+  },
+  {
+    "id": "e92e417d-aa4f-4e88-ab00-6e2d4b303afe",
+    "username": "qwertyui",
+    "passwordHash": "$2a$12$CwRH6ko3XwU5ZJTMBLd1HetoB9puHCe6HpkKkplBHix.uPEU4WL2m",
+    "createdAt": "2026-07-22T07:24:18.732Z"
   }
 ]
